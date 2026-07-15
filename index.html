@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Semaj's Solana Wallet</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#9945FF">
+
+    <!-- Standard and Android App Icon Mapping Hook -->
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" sizes="192x192" href="logo.png">
+
+    <!-- iOS Apple Mobile Home Screen Icon Hooks -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="SemajSolWallet">
+    <link rel="apple-touch-icon" href="logo.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="logo.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="logo.png">
+    <link rel="apple-touch-icon" sizes="167x167" href="logo.png">
+
+    <style>
+        body { font-family: sans-serif; padding: 20px; max-width: 500px; margin: 0 auto; background: #121214; color: #e1e1e6; }
+        h2 { text-align: center; color: #9945FF; font-size: 2.0em; margin-bottom: 25px; }
+        h3 { margin-bottom: 8px; color: #14F195; font-size: 1.2em; }
+        .box { background: #1a1a1e; padding: 20px; border-radius: 12px; border: 1px solid #29292e; margin-bottom: 20px; }
+        .flex-btn-group { display: flex; gap: 10px; margin-bottom: 12px; }
+        label { font-size: 1.0em; color: #8d8d99; display: block; margin-top: 10px; }
+        input, select { width: 100%; padding: 16px; margin: 6px 0 16px 0; background: #09090a; color: #fff; border: 1px solid #29292e; border-radius: 8px; box-sizing: border-box; }
+        button { color: white; border: none; padding: 18px 20px; border-radius: 8px; font-weight: bold; width: 100%; cursor: pointer; margin-bottom: 12px; font-size: 1.2em; }
+        .primary-btn { background: #9945FF; }
+        .snap-btn { background: #14F195; color: #09090a; }
+        .info-btn { background: #007bff; }
+        .cancel-btn { background: #dc3545; }
+        .token-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            background: #09090a;
+            border: 1px solid #29292e;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s, border-color 0.2s;
+            -webkit-user-select: none; /* Smooths touch response on mobile */
+            user-select: none;
+        }
+        .token-item:hover {
+            background: #1e1e24;
+            border-color: #9945FF; /* Subtle purple highlight */
+        }
+        .token-item:active {
+            transform: scale(0.98);
+            background: #141416;
+        }
+        .token-name {
+            font-weight: bold;
+            color: #fff;
+            font-size: 1.2em; /* Increased size for scannability */
+        }
+        .token-balance {
+            font-family: monospace;
+            font-weight: bold;
+            color: #14F195;
+            font-size: 1.2em; /* Emphasized numbers */
+        }
+        .hidden-view { display: none; }
+        .stake-card { background: #09090a; padding: 12px; border-radius: 8px; border: 1px solid #29292e; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 1000; justify-content: center; align-items: center; padding: 20px; box-sizing: border-box; }
+        .modal-content { background: #1a1a1e; border: 1px solid #29292e; border-radius: 12px; padding: 24px; width: 100%; max-width: 450px; }
+        #qr-container { display: flex; justify-content: center; margin: 20px 0; background: #fff; padding: 20px; border-radius: 8px; }
+        #reader { width: 100%; max-width: 400px; background: #000; border-radius: 8px; overflow: hidden; }
+    </style>
+  <script type="module" crossorigin src="/assets/index.js"></script>
+</head>
+<body>
+    <h2>Semaj's Solana Wallet</h2>
+    <!-- NEW: Loaded Watch Address Label & Interactive Copy-Ready QR Code Canvas Card -->
+    <div id="own-wallet-card" style="background: #1a1a1e; border: 1px solid #29292e; border-radius: 12px; padding: 20px; text-align: center; margin-bottom: 20px; display: none;">
+        <!-- FIXED: Changed to an immutable image destination block placeholder container -->
+<div id="own-wallet-qr-container" style="background: #fff; padding: 12px; border-radius: 8px; width: 240px; height: 240px; margin: 0 auto 12px auto; display: flex; justify-content: center; align-items: center; cursor: pointer;">
+    <div id="own-wallet-qrcode-target" style="width: 240px; height: 240px; display: flex; justify-content: center; align-items: center;"></div>
+</div>
+        <div id="own-wallet-address-text" style="font-family: monospace; font-size: 1.2em; color: #14F195; word-break: break-all; cursor: pointer; padding: 6px; border-radius: 6px; background: #09090a; border: 1px solid #1f1f23; transition: background 0.2s;">
+            Awaiting Wallet Address...
+        </div>
+        <div style="font-size: 0.75em; color: #8d8d99; margin-top: 6px;">💡 Tap address or QR code to copy key</div>
+    </div>
+
+
+    <!-- VIEW 1: MAIN DASHBOARD -->
+    <div id="view-dashboard">
+        <div class="box">
+            <h3>1. Native Staking</h3>
+            <div id="staked-positions-list">
+                <p style="color: #8d8d99;">No active or cooling stake accounts found.</p>
+            </div>
+            <button id="btn-go-stake" class="primary-btn" style="margin-top: 10px;">+ STAKE SOL</button>
+        </div>
+        <div class="box">
+            <h3>2. Token Assets & Balances</h3>
+            <div id="token-list-container"><p style="color: #8d8d99;">Awaiting initialization...</p></div>
+        </div>
+        <div class="box">
+            <h3>3. Wallet Synchronization</h3>
+            <div class="flex-btn-group">
+                <button id="btn-sync" class="snap-btn">🔄 SYNC</button>
+                <button id="btn-solscan" class="info-btn">🌐 SOLSCAN</button>
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <button id="btn-change-wallet" class="cancel-btn" style="margin-bottom:0;">⚙️ MANAGE WALLETS</button>
+                <button id="btn-configure-rpc" class="info-btn" style="width: auto; padding: 18px 20px; margin-bottom:0; font-size: 1.2em;" type="button">⚙️</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- VIEW 2: TRANSFER PANEL -->
+    <div id="view-transfer" class="hidden-view">
+        <div class="box">
+            <h3>💸 Transfer Asset</h3>
+            <p>Asset: <span id="transfer-token-name" style="color:#14F195; font-weight:bold;">SOL</span></p>
+            <label for="transfer-recipient">Recipient Solana Address:</label>
+            <div style="position: relative; display: flex; gap: 8px; align-items: center;">
+                <input type="text" id="transfer-recipient" placeholder="Enter target public key base58..." style="margin: 0; flex-grow: 1;" autocomplete="off">
+                <button id="btn-scan-recipient" class="snap-btn" type="button" style="width: auto; padding: 10px; margin: 0; white-space: nowrap;">📷 SCAN</button>
+                <div id="quick-pick-wallet-dropdown" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: #141416; border: 1px solid #29292e; border-radius: 6px; max-height: 160px; overflow-y: auto; z-index: 1000; margin-top: 4px; box-shadow: 0px 4px 12px rgba(0,0,0,0.5); padding: 5px;"></div>
+            </div>
+            <label for="transfer-amount">Amount:</label>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                    <!-- Changed type to 'text' to completely disable browser up/down arrows -->
+                    <input type="text" id="transfer-amount" placeholder="0.00" style="margin: 0; margin-bottom: 12px;">
+                    <button id="btn-max-transfer" class="info-btn" type="button" style="width: auto; padding: 10px; margin: 0; margin-bottom: 12px; white-space: nowrap;">MAX</button>
+                </div>
+            <button id="btn-generate-transfer-msg" class="primary-btn">🔒 GENERATE TRANSACTION MESSAGE</button>
+            <!-- NEW: DEDICATED TOKEN SWAP LAYER BLOCK CARD -->
+            <div class="box" style="margin-top: 25px; margin-bottom: 25px; border: 1px dashed #9945FF; background: #0c0c0e; padding: 15px; border-radius: 10px;">
+                <h4 style="color: #9945FF; margin: 0 0 10px 0; font-size: 1.1em;">🔀 Jupiter Token Swap</h4>
+
+                <label for="swap-target-mint">Swap To Asset:</label>
+                <div style="position: relative;">
+                    <input type="text" id="swap-target-mint" placeholder="Select destination mint token..." style="margin-bottom: 12px;" autocomplete="off">
+                    <!-- Predefined Dictionary Search Overlay Dropdown Container -->
+                    <div id="swap-token-dropdown" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: #141416; border: 1px solid #29292e; border-radius: 6px; max-height: 180px; overflow-y: auto; z-index: 1050; padding: 5px; box-shadow: 0px 4px 12px rgba(0,0,0,0.5);"></div>
+                </div>
+
+                <label for="swap-amount">Swap Amount:</label>
+                <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 15px;">
+                    <input type="text" id="swap-amount" placeholder="0.00" style="margin: 0;">
+                    <button id="btn-max-swap" class="info-btn" type="button" style="width: auto; padding: 10px; margin: 0; white-space: nowrap;">MAX</button>
+                </div>
+                <label style="margin-top: 12px; margin-bottom: 6px;">Execution Speed Mode:</label>
+                <div style="display: flex; gap: 15px; background: #09090a; padding: 12px; border: 1px solid #29292e; border-radius: 8px; margin-bottom: 15px;">
+                    <label style="display: inline-flex; align-items: center; gap: 6px; margin: 0; cursor: pointer; color: #fff;">
+                        <input type="radio" name="swap-speed-mode" value="ECO" checked style="width: auto; margin: 0;"> ECO
+                    </label>
+                    <label style="display: inline-flex; align-items: center; gap: 6px; margin: 0; cursor: pointer; color: #fff;">
+                        <input type="radio" name="swap-speed-mode" value="STANDARD" style="width: auto; margin: 0;"> Standard
+                    </label>
+                    <label style="display: inline-flex; align-items: center; gap: 6px; margin: 0; cursor: pointer; color: #fff;">
+                        <input type="radio" name="swap-speed-mode" value="FAST" style="width: auto; margin: 0;"> Fast
+                    </label>
+                </div>
+
+                <button id="btn-generate-swap-msg" class="primary-btn" style="background: #14F195; color: #09090a; margin-bottom: 0;">🔐 GENERATE SWAP MESSAGE</button>
+            </div>
+
+            <button id="btn-back-transfer" class="cancel-btn">⬅️ BACK TO DASHBOARD</button>
+        </div>
+    </div>
+
+    <!-- VIEW 3: STAKING PANEL -->
+    <div id="view-stake" class="hidden-view">
+        <div class="box">
+            <h3>🥩 Delegate Stake</h3>
+            <label for="stake-amount">Amount of SOL to Stake:</label>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                    <input type="text" id="stake-amount" placeholder="Amount in SOL" style="margin: 0;">
+                    <button id="btn-max-stake" class="info-btn" type="button" style="width: auto; padding: 10px; margin: 0; white-space: nowrap;">MAX</button>
+                </div>
+            <label for="stake-validator">Select Target Validator Node:</label>
+            <select id="stake-validator">
+                <option value="CUSTOM">-- Manual Input --</option>
+                <!-- <option value="YourPreferedValidatorInB58Address" selected>TEST Validator</option> -->
+            </select>
+            <label for="stake-validator-manual">Validator Address:</label>
+            <div style="display: flex; gap: 8px; align-items: center;">
+                <input type="text" id="stake-validator-manual" value="" placeholder="Paste raw validator vote account address..." style="margin: 0;">
+                <button id="btn-scan-validator" class="snap-btn" type="button" style="width: auto; padding: 10px; margin: 0; white-space: nowrap;">📷 SCAN</button>
+            </div>
+            <button id="btn-generate-stake-msg" class="snap-btn">GENERATE STAKING MESSAGE</button>
+
+            <button id="btn-back-stake" class="cancel-btn">⬅️ BACK TO DASHBOARD</button>
+        </div>
+    </div>
+
+    <!-- GLOBAL SIGNING MODAL OVERLAY -->
+    <div id="global-modal" class="modal">
+        <div class="modal-content">
+            <h3 id="modal-title" style="color: #9945FF;">Transaction Unsigned Message</h3>
+            
+            <!-- 1. Live Camera Viewfinder Box Layer -->
+            <div id="scanner-region" style="display: none; width: 100%; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: center; margin-top: 15px;">
+                <div id="reader" style="width: 100%; border-radius: 8px; overflow: hidden; background: #000;"></div>
+                <input type="file" id="qr-image-file-input" accept="image/*" style="display: none;">
+                <button id="btn-close-scanner" class="info-btn" type="button" style="margin-top: 15px; width: 100%;">📂 LOAD FROM QR CODE IMAGE</button>
+            </div>
+
+            <div id="qr-container" style="display: flex; justify-content: center; margin: 20px 0; background: #fff; padding: 20px; border-radius: 8px;">
+                <!-- Keep this as a clean container div -->
+                <div id="qrcode"></div>
+            </div>
+
+            <!-- 3. Text Readout Details Element Layer -->
+            <label id="qr-string-label" style="color:#14F195; display: block; font-size: 0.9em; margin-top: 10px;">Raw Base36 Transaction Message Payload:</label>
+            <div id="qr-string-output" style="background: #09090a; padding: 12px; border-radius: 6px; border: 1px solid #29292e; font-family: monospace; font-size: 0.85em; color: #e1e1e6; word-break: break-all; max-height: 120px; overflow-y: auto; margin-bottom: 15px;">None</div>
+            
+            <!-- 4. Action Trigger Buttons Group Matrix -->
+            <button id="btn-modal-scan-signed" class="snap-btn">📷 SCAN SIGNED QR RETURN</button>
+            <div id="tx-success-redirect-box" style="display: none; background: #14F195; padding: 14px; border-radius: 8px; margin-bottom: 15px; text-align: center;">
+                <a id="tx-solscan-anchor" href="#" target="_blank" style="color: #09090a; font-weight: bold; text-decoration: none; display: block; font-size: 0.95em;">
+                    🎉 BROADCAST SUCCESSFUL!<br>👉 Tap here to view on Solscan
+                </a>
+            </div>
+            <button id="btn-close-modal" class="cancel-btn" style="margin-top: 15px; margin-bottom:0;">CLOSE DIALOG</button>
+        </div>
+    </div>
+
+    <!-- 🌟 PASTE THE NEW WALLET MANAGER MODAL RIGHT HERE: -->
+    <div id="wallet-manager-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <h3 style="color: #14F195; text-align: center; margin-bottom: 15px;">Manage Stored Wallets</h3>
+
+            <!-- UPDATED: Flex Row layout adding an inline SCAN button beside input entry boxes -->
+            <label for="new-wallet-address" style="color: #8d8d99; font-size: 0.9em;">Add New Wallet Address:</label>
+            <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 20px;">
+                <input type="text" id="new-wallet-address" placeholder="Paste Base58 Solana public key..." style="margin: 0; flex-grow: 1;">
+                <button id="btn-scan-new-wallet" class="snap-btn" type="button" style="width: auto; padding: 10px; margin: 0; white-space: nowrap;">📷 SCAN</button>
+                <button id="btn-add-wallet-confirm" class="info-btn" type="button" style="width: auto; padding: 10px; margin: 0; white-space: nowrap;">ADD</button>
+            </div>
+
+            <label style="color: #8d8d99; font-size: 0.9em; display: block; margin-bottom: 10px;">Your Stored Accounts:</label>
+            <div id="wallet-manager-list-container" style="max-height: 200px; overflow-y: auto; margin-bottom: 20px; display: flex; flex-direction: column; gap: 10px;">
+                <!-- JavaScript will dynamically build and inject rows here -->
+            </div>
+
+            <button id="btn-clear-all-wallets" type="button" style="width: 100%; background: #9945FF; color: white; padding: 14px; margin-top: 15px; margin-bottom: 5px; font-size: 0.95em; border-radius: 8px; font-weight: bold; border: none; cursor: pointer;">🚨 CLEAR ALL WALLETS</button>
+            <button id="btn-close-wallet-manager" class="cancel-btn" style="margin-top: 10px; margin-bottom: 0; width: 100%;">CLOSE MANAGER</button>
+        </div>
+    </div>
+
+    <div id="rpc-status-footnote" style="text-align: center; font-size: 0.8em; color: #8d8d99; margin-top: 25px; padding-bottom: 20px; font-family: monospace; display: none;"></div>
+
+    <!-- LINK TO OUR COMBINED MODERN JS CONTROLLER -->
+</body>
+</html>
+
