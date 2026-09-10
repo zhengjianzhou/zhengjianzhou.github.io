@@ -7,17 +7,17 @@
     <meta name="theme-color" content="#9945FF">
 
     <!-- Standard and Android App Icon Mapping Hook -->
-    <link rel="manifest" href="manifest.json">
-    <link rel="icon" type="image/png" sizes="192x192" href="logo.png">
+    <link rel="manifest" href="/assets/manifest.json">
+    <link rel="icon" type="image/png" sizes="192x192" href="/assets/logo.png">
 
     <!-- iOS Apple Mobile Home Screen Icon Hooks -->
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="SemajSolWallet">
-    <link rel="apple-touch-icon" href="logo.png">
-    <link rel="apple-touch-icon" sizes="152x152" href="logo.png">
-    <link rel="apple-touch-icon" sizes="180x180" href="logo.png">
-    <link rel="apple-touch-icon" sizes="167x167" href="logo.png">
+    <link rel="apple-touch-icon" href="/assets/logo.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="/assets/logo.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/assets/logo.png">
+    <link rel="apple-touch-icon" sizes="167x167" href="/assets/logo.png">
 
     <style>
         body { font-family: sans-serif; padding: 20px; max-width: 500px; margin: 0 auto; background: #121214; color: #e1e1e6; }
@@ -67,8 +67,10 @@
         }
         .hidden-view { display: none; }
         .stake-card { background: #09090a; padding: 12px; border-radius: 8px; border: 1px solid #29292e; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        h3 { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+        .block-total { font-family: monospace; font-size: 0.85em; color: #14F195; font-weight: bold; white-space: nowrap; }
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 1000; justify-content: center; align-items: center; padding: 20px; box-sizing: border-box; }
-        .modal-content { background: #1a1a1e; border: 1px solid #29292e; border-radius: 12px; padding: 24px; width: 100%; max-width: 450px; }
+        .modal-content { background: #1a1a1e; border: 1px solid #29292e; border-radius: 12px; padding: 24px; width: 100%; max-width: 450px; max-height: 85vh; overflow-y: auto; }
         #qr-container { display: flex; justify-content: center; margin: 20px 0; background: #fff; padding: 20px; border-radius: 8px; }
         #reader { width: 100%; max-width: 400px; background: #000; border-radius: 8px; overflow: hidden; }
     </style>
@@ -91,26 +93,31 @@
 
     <!-- VIEW 1: MAIN DASHBOARD -->
     <div id="view-dashboard">
+        <div class="box" style="background: #121214; border: 2px dashed #9945FF; display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-weight: bold; color: #9945FF; font-size: 1.1em;">TOTAL VALUE</span>
+            <span id="grand-total-value" style="color: #14F195; font-family: monospace; font-size: 1.25em; font-weight: bold;">$0.00</span>
+        </div>
         <div class="box">
-            <h3>1. Native Staking</h3>
+            <h3>Native Staking <span id="staking-total-value" class="block-total"></span></h3>
             <div id="staked-positions-list">
                 <p style="color: #8d8d99;">No active or cooling stake accounts found.</p>
             </div>
             <button id="btn-go-stake" class="primary-btn" style="margin-top: 10px;">+ STAKE SOL</button>
         </div>
         <div class="box">
-            <h3>2. Token Assets & Balances</h3>
+            <h3>Token Assets & Balances <span id="token-total-value" class="block-total"></span></h3>
             <div id="token-list-container"><p style="color: #8d8d99;">Awaiting initialization...</p></div>
         </div>
+
         <div class="box">
-            <h3>3. Wallet Synchronization</h3>
+            <h3>Wallet Synchronization</h3>
             <div class="flex-btn-group">
                 <button id="btn-sync" class="snap-btn">🔄 SYNC</button>
                 <button id="btn-solscan" class="info-btn">🌐 SOLSCAN</button>
             </div>
             <div style="display: flex; gap: 10px;">
                 <button id="btn-change-wallet" class="cancel-btn" style="margin-bottom:0;">⚙️ MANAGE WALLETS</button>
-                <button id="btn-configure-rpc" class="info-btn" style="width: auto; padding: 18px 20px; margin-bottom:0; font-size: 1.2em;" type="button">⚙️</button>
+                <button id="btn-open-settings" class="info-btn" style="width: auto; padding: 18px 20px; margin-bottom:0; font-size: 1.2em;" type="button">⚙️</button>
             </div>
         </div>
     </div>
@@ -206,15 +213,17 @@
             
             <!-- 1. Live Camera Viewfinder Box Layer -->
             <div id="scanner-region" style="display: none; width: 100%; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: center; margin-top: 15px;">
+                <p id="keystone-scan-progress" style="display: none; text-align: center; color: #14F195; font-size: 0.85em; font-weight: bold; margin: 0 0 8px 0;"></p>
                 <div id="reader" style="width: 100%; border-radius: 8px; overflow: hidden; background: #000;"></div>
                 <input type="file" id="qr-image-file-input" accept="image/*" style="display: none;">
                 <button id="btn-close-scanner" class="info-btn" type="button" style="margin-top: 15px; width: 100%;">📂 LOAD FROM QR CODE IMAGE</button>
             </div>
 
-            <div id="qr-container" style="display: flex; justify-content: center; margin: 20px 0; background: #fff; padding: 20px; border-radius: 8px;">
+            <div id="qr-container" style="display: flex; justify-content: center; margin: 20px 0; background: #fff; padding: 20px; border-radius: 8px; cursor: pointer;">
                 <!-- Keep this as a clean container div -->
                 <div id="qrcode"></div>
             </div>
+            <p id="qr-mode-caption" style="text-align: center; color: #8d8d99; font-size: 0.8em; margin-top: -12px; margin-bottom: 12px;">Tap QR to switch to Animated QR mode</p>
 
             <!-- 3. Text Readout Details Element Layer -->
             <label id="qr-string-label" style="color:#14F195; display: block; font-size: 0.9em; margin-top: 10px;">Raw Base10 Transaction Message Payload:</label>
@@ -255,6 +264,52 @@
     </div>
 
     <div id="rpc-status-footnote" style="text-align: center; font-size: 0.8em; color: #8d8d99; margin-top: 25px; padding-bottom: 20px; font-family: monospace; display: none;"></div>
+
+    <!-- SETTINGS MODAL: custom RPC endpoint, cached in localStorage -->
+    <div id="settings-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <h3 style="color: #14F195; text-align: center; margin-bottom: 15px;">Settings</h3>
+
+            <label for="settings-rpc-url" style="color: #8d8d99; font-size: 0.9em;">Custom Solana RPC URL:</label>
+            <input type="text" id="settings-rpc-url" placeholder="Leave blank for default mainnet node" style="margin-bottom: 20px;">
+
+            <button id="btn-open-keystone-pairing" class="info-btn" type="button" style="margin-bottom: 8px;">🔗 PAIR KEYSTONE DEVICE</button>
+            <p style="color: #8d8d99; font-size: 0.75em; margin-bottom: 20px;">Scans your Keystone's account-export QR (public keys only — the same one it shows for Solflare, Backpack, etc.) to learn the exact path and fingerprint for each account, so the derivation path never has to be guessed.</p>
+
+            <label for="settings-qr-fragment-length" style="color: #8d8d99; font-size: 0.9em;">Animated QR Fragment Size (chars):</label>
+            <input type="number" id="settings-qr-fragment-length" placeholder="800" style="margin-bottom: 8px;">
+            <p style="color: #8d8d99; font-size: 0.75em; margin-bottom: 12px;">Lower = simpler/larger QR per frame but more frames to scan. Higher = denser QR but fewer frames. Default 800.</p>
+
+            <label for="settings-qr-frame-interval" style="color: #8d8d99; font-size: 0.9em;">Animated QR Frame Interval (ms):</label>
+            <input type="number" id="settings-qr-frame-interval" placeholder="150" style="margin-bottom: 8px;">
+            <p style="color: #8d8d99; font-size: 0.75em; margin-bottom: 20px;">How long each frame stays on screen before cycling. Raise this if your camera struggles to capture frames cleanly. Default 150.</p>
+
+            <button id="btn-save-settings" class="snap-btn" type="button" style="margin-bottom: 10px;">💾 SAVE & RELOAD</button>
+            <button id="btn-close-settings" class="cancel-btn" style="margin-bottom: 0; width: 100%;">CANCEL</button>
+        </div>
+    </div>
+
+    <!-- KEYSTONE PAIRING MODAL: scan the device's public account-export QR -->
+    <div id="keystone-pairing-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <h3 style="color: #14F195; text-align: center; margin-bottom: 15px;">Pair Keystone Device</h3>
+            <p style="color: #8d8d99; font-size: 0.85em; margin-bottom: 15px;">On your Keystone, choose to connect/pair with a wallet (e.g. select "Solflare") and scan the QR code it shows. This is public key data only — the same export any wallet reads.</p>
+
+            <div id="keystone-pairing-scanner-region" style="display: none; width: 100%; box-sizing: border-box; flex-direction: column; align-items: center; margin-bottom: 15px;">
+                <p id="keystone-pairing-progress" style="display: none; text-align: center; color: #14F195; font-size: 0.85em; font-weight: bold; margin: 0 0 8px 0;"></p>
+                <div id="keystone-pairing-reader" style="width: 100%; border-radius: 8px; overflow: hidden; background: #000;"></div>
+            </div>
+
+            <button id="btn-start-keystone-pairing-scan" class="snap-btn" type="button" style="margin-bottom: 10px;">📷 START SCAN</button>
+
+            <div id="keystone-pairing-results" style="display: none; margin-bottom: 15px;">
+                <p style="color: #8d8d99; font-size: 0.8em; margin-bottom: 8px;">Found accounts — tap Save on the one(s) you use:</p>
+                <div id="keystone-pairing-results-list"></div>
+            </div>
+
+            <button id="btn-close-keystone-pairing" class="cancel-btn" style="margin-bottom: 0; width: 100%;">CLOSE</button>
+        </div>
+    </div>
 
     <!-- LINK TO OUR COMBINED MODERN JS CONTROLLER -->
 </body>
