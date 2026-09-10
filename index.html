@@ -7,17 +7,17 @@
     <meta name="theme-color" content="#9945FF">
 
     <!-- Standard and Android App Icon Mapping Hook -->
-    <link rel="manifest" href="/assets/manifest.json">
-    <link rel="icon" type="image/png" sizes="192x192" href="/assets/logo.png">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" sizes="192x192" href="logo.png">
 
     <!-- iOS Apple Mobile Home Screen Icon Hooks -->
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="SemajSolWallet">
-    <link rel="apple-touch-icon" href="/assets/logo.png">
-    <link rel="apple-touch-icon" sizes="152x152" href="/assets/logo.png">
-    <link rel="apple-touch-icon" sizes="180x180" href="/assets/logo.png">
-    <link rel="apple-touch-icon" sizes="167x167" href="/assets/logo.png">
+    <link rel="apple-touch-icon" href="logo.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="logo.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="logo.png">
+    <link rel="apple-touch-icon" sizes="167x167" href="logo.png">
 
     <style>
         body { font-family: sans-serif; padding: 20px; max-width: 500px; margin: 0 auto; background: #121214; color: #e1e1e6; }
@@ -285,7 +285,25 @@
             <p style="color: #8d8d99; font-size: 0.75em; margin-bottom: 20px;">How long each frame stays on screen before cycling. Raise this if your camera struggles to capture frames cleanly. Default 150.</p>
 
             <button id="btn-save-settings" class="snap-btn" type="button" style="margin-bottom: 10px;">💾 SAVE & RELOAD</button>
+
+            <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                <button id="btn-export-settings" class="info-btn" type="button" style="flex: 1; margin: 0;">⬆️ EXPORT</button>
+                <button id="btn-import-settings" class="info-btn" type="button" style="flex: 1; margin: 0;">⬇️ IMPORT</button>
+            </div>
+
             <button id="btn-close-settings" class="cancel-btn" style="margin-bottom: 0; width: 100%;">CANCEL</button>
+        </div>
+    </div>
+
+    <!-- SETTINGS EXPORT/IMPORT MODAL: shared for both directions -->
+    <div id="settings-io-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <h3 id="settings-io-title" style="color: #14F195; text-align: center; margin-bottom: 15px;">Export Settings</h3>
+            <p id="settings-io-instructions" style="color: #8d8d99; font-size: 0.8em; margin-bottom: 10px;"></p>
+            <textarea id="settings-io-textarea" rows="10" spellcheck="false" style="width: 100%; box-sizing: border-box; background: #09090a; color: #fff; border: 1px solid #29292e; border-radius: 8px; padding: 12px; font-family: monospace; font-size: 0.8em; margin-bottom: 15px; resize: vertical;"></textarea>
+            <button id="btn-settings-io-copy" class="snap-btn" type="button" style="margin-bottom: 10px; display: none;">📋 COPY TO CLIPBOARD</button>
+            <button id="btn-settings-io-save" class="snap-btn" type="button" style="margin-bottom: 10px; display: none;">💾 SAVE & RELOAD</button>
+            <button id="btn-settings-io-close" class="cancel-btn" style="margin-bottom: 0; width: 100%;">CLOSE</button>
         </div>
     </div>
 
