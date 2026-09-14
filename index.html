@@ -94,9 +94,14 @@
       // Every fresh page load/reload shows this if a passcode is set —
       // the "stay unlocked" state lives only in JS memory (passcodeLock.js),
       // never here, since a real reload is exactly when it should re-lock.
+      // Exception: a one-time skip flag (set by in-app navigations, like
+      // switching wallets, that shouldn't re-prompt) — read here only,
+      // never removed here; passcodeLock.js's module code is what actually
+      // consumes it, so it only ever exempts this one page load.
       (function () {
         try {
-          if (localStorage.getItem('app_passcode_lock')) {
+          var skip = sessionStorage.getItem('app_passcode_skip_next_unlock');
+          if (localStorage.getItem('app_passcode_lock') && !skip) {
             document.getElementById('passcode-lock-overlay').style.display = 'flex';
           }
         } catch (e) { }
@@ -303,7 +308,12 @@
             <p style="color: #8d8d99; font-size: 0.75em; margin-bottom: 20px;">Scans your Keystone's account-export QR (public keys only — the same one it shows for Solflare, Backpack, etc.) to learn the exact path and fingerprint for each account, so the derivation path never has to be guessed.</p>
 
             <button id="btn-open-passcode-settings" class="info-btn" type="button" style="margin-bottom: 8px;">🔒 SET PASSCODE</button>
-            <p style="color: #8d8d99; font-size: 0.75em; margin-bottom: 20px;">Optional. Locks the app behind a passcode until this tab is closed — reopening a background tab never re-prompts, only opening fresh does. Tied to this browser only; not included in Export/Import Settings.</p>
+            <p style="color: #8d8d99; font-size: 0.75em; margin-bottom: 10px;">Optional. Locks the app behind a passcode until this tab is closed — reopening a background tab never re-prompts, only opening fresh does. Tied to this browser only; not included in Export/Import Settings.</p>
+
+            <label id="wallet-switch-guard-label" style="display: flex; align-items: center; gap: 8px; color: #8d8d99; font-size: 0.85em; margin-bottom: 20px; cursor: pointer;">
+                <input type="checkbox" id="settings-require-passcode-wallet-switch" style="width: auto; margin: 0; padding: 0;">
+                <span>Require passcode to switch wallets</span>
+            </label>
 
             <label for="settings-qr-fragment-length" style="color: #8d8d99; font-size: 0.9em;">Animated QR Fragment Size (chars):</label>
             <input type="number" id="settings-qr-fragment-length" placeholder="800" style="margin-bottom: 8px;">
