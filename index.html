@@ -27,6 +27,9 @@
         .flex-btn-group { display: flex; gap: 10px; margin-bottom: 12px; }
         label { font-size: 1.0em; color: #8d8d99; display: block; margin-top: 10px; }
         input, select { width: 100%; padding: 16px; margin: 6px 0 16px 0; background: #09090a; color: #fff; border: 1px solid #29292e; border-radius: 8px; box-sizing: border-box; }
+        .keypad-btn { padding: 18px 0; font-size: 1.4em; font-weight: bold; background: #09090a; color: #14F195; border: 1px solid #29292e; border-radius: 10px; cursor: pointer; transition: background 0.15s; }
+        .keypad-btn:active { background: #1e1e24; }
+        .keypad-btn-action { color: #8d8d99; font-size: 0.95em; }
         button { color: white; border: none; padding: 18px 20px; border-radius: 8px; font-weight: bold; width: 100%; cursor: pointer; margin-bottom: 12px; font-size: 1.2em; }
         .primary-btn { background: #9945FF; }
         .snap-btn { background: #14F195; color: #09090a; }
@@ -77,6 +80,29 @@
   <script type="module" crossorigin src="/assets/index.js"></script>
 </head>
 <body>
+    <!-- PASSCODE LOCK OVERLAY: shown before anything else if a passcode is
+         set and this tab hasn't unlocked it yet this session. Purely
+         additive — stays display:none forever if no passcode is ever set. -->
+    <div id="passcode-lock-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #09090a; z-index: 99999; flex-direction: column; align-items: center; justify-content: center; padding: 24px; box-sizing: border-box;">
+        <img src="logo.png" alt="Wallet" style="width: 64px; height: 64px; border-radius: 12px; margin-bottom: 20px;">
+        <h2 style="color: #14F195; margin-bottom: 20px;">Enter Passcode</h2>
+        <div id="passcode-lock-keypad" style="width: 100%; max-width: 280px;"></div>
+    </div>
+    <script>
+      // Synchronous check so a locked app never even flashes its content
+      // before app.js (a deferred module script) gets a chance to run.
+      // Every fresh page load/reload shows this if a passcode is set —
+      // the "stay unlocked" state lives only in JS memory (passcodeLock.js),
+      // never here, since a real reload is exactly when it should re-lock.
+      (function () {
+        try {
+          if (localStorage.getItem('app_passcode_lock')) {
+            document.getElementById('passcode-lock-overlay').style.display = 'flex';
+          }
+        } catch (e) { }
+      })();
+    </script>
+
     <h2>Semaj's Solana Wallet</h2>
     <div id="own-wallet-card" style="background: #1a1a1e; border: 1px solid #29292e; border-radius: 12px; padding: 20px; text-align: center; margin-bottom: 20px; display: none;">
         <button id="toggle-qr-btn" style="background: #14F195; color: #000; border: none; padding: 8px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; margin-bottom: 12px; font-size: 0.9em; transition: opacity 0.2s;">
@@ -276,6 +302,9 @@
             <button id="btn-open-keystone-pairing" class="info-btn" type="button" style="margin-bottom: 8px;">🔗 PAIR KEYSTONE DEVICE</button>
             <p style="color: #8d8d99; font-size: 0.75em; margin-bottom: 20px;">Scans your Keystone's account-export QR (public keys only — the same one it shows for Solflare, Backpack, etc.) to learn the exact path and fingerprint for each account, so the derivation path never has to be guessed.</p>
 
+            <button id="btn-open-passcode-settings" class="info-btn" type="button" style="margin-bottom: 8px;">🔒 SET PASSCODE</button>
+            <p style="color: #8d8d99; font-size: 0.75em; margin-bottom: 20px;">Optional. Locks the app behind a passcode until this tab is closed — reopening a background tab never re-prompts, only opening fresh does. Tied to this browser only; not included in Export/Import Settings.</p>
+
             <label for="settings-qr-fragment-length" style="color: #8d8d99; font-size: 0.9em;">Animated QR Fragment Size (chars):</label>
             <input type="number" id="settings-qr-fragment-length" placeholder="800" style="margin-bottom: 8px;">
             <p style="color: #8d8d99; font-size: 0.75em; margin-bottom: 12px;">Lower = simpler/larger QR per frame but more frames to scan. Higher = denser QR but fewer frames. Default 800.</p>
@@ -326,6 +355,33 @@
             </div>
 
             <button id="btn-close-keystone-pairing" class="cancel-btn" style="margin-bottom: 0; width: 100%;">CLOSE</button>
+        </div>
+    </div>
+
+    <!-- PASSCODE SETUP MODAL -->
+    <div id="passcode-setup-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <h3 id="passcode-setup-title" style="color: #14F195; text-align: center; margin-bottom: 10px;">Set Passcode</h3>
+            <p id="passcode-setup-instructions" style="color: #8d8d99; font-size: 0.85em; text-align: center; margin-bottom: 15px;">Enter a new passcode (numbers only, at least 4 digits).</p>
+
+            <div id="passcode-setup-keypad" style="margin-bottom: 15px;"></div>
+
+            <p style="color: #8d8d99; font-size: 0.75em; margin-bottom: 20px;">Uses numbers only, and only unlocks this app on this device — it won't work if copied elsewhere. It's never included in Export/Import Settings, so you'll set it up again on any other device.</p>
+
+            <button id="btn-passcode-setup-next" class="snap-btn" type="button" style="margin-bottom: 10px;">NEXT</button>
+            <button id="btn-remove-passcode" class="cancel-btn" type="button" style="margin-bottom: 10px; display: none;">🗑️ REMOVE PASSCODE</button>
+            <button id="btn-close-passcode-setup" class="cancel-btn" style="margin-bottom: 0; width: 100%;">CANCEL</button>
+        </div>
+    </div>
+
+    <!-- PASSCODE VERIFY MODAL: gates Export/Import Settings (and reusable for
+         anything else) if a passcode has been set -->
+    <div id="passcode-verify-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <h3 style="color: #14F195; text-align: center; margin-bottom: 10px;">Enter Passcode</h3>
+            <p style="color: #8d8d99; font-size: 0.85em; text-align: center; margin-bottom: 15px;">Enter your passcode to continue.</p>
+            <div id="passcode-verify-keypad" style="margin-bottom: 15px;"></div>
+            <button id="btn-close-passcode-verify" class="cancel-btn" style="margin-bottom: 0; width: 100%;">CANCEL</button>
         </div>
     </div>
 
