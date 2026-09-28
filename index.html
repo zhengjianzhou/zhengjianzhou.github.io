@@ -30,6 +30,17 @@
         .keypad-btn { padding: 18px 0; font-size: 1.4em; font-weight: bold; background: #09090a; color: #14F195; border: 1px solid #29292e; border-radius: 10px; cursor: pointer; transition: background 0.15s; }
         .keypad-btn:active { background: #1e1e24; }
         .keypad-btn-action { color: #8d8d99; font-size: 0.95em; }
+        /* Folded "Details" block on swap signing dialogs (route + base10 payload).
+           Plain mode (any non-swap tx) has no is-collapsible class, so it lays out exactly as before. */
+        .details-collapse { display: block; }
+        .details-collapse.is-collapsible { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 0.25s ease; }
+        .details-collapse.is-collapsible.is-open { grid-template-rows: 1fr; }
+        .details-collapse.is-collapsible > .details-collapse-inner { overflow: hidden; min-height: 0; }
+        .details-toggle-btn { width: auto; padding: 9px 18px; margin: 0; font-size: 0.85em; font-weight: normal; background: #1e1e24; color: #8d8d99; border: 1px solid #29292e; border-radius: 16px; }
+        #tx-details-list > div + div { margin-top: 4px; }
+        #tx-details-list > .tx-details-footer { margin-top: 8px; padding-top: 8px; border-top: 1px dashed #29292e; color: #14F195; }
+        #tx-details-list > .tx-details-footer + .tx-details-footer { margin-top: 3px; padding-top: 0; border-top: none; }
+        @media (prefers-reduced-motion: reduce) { .details-collapse.is-collapsible { transition: none; } }
         button { color: white; border: none; padding: 18px 20px; border-radius: 8px; font-weight: bold; width: 100%; cursor: pointer; margin-bottom: 12px; font-size: 1.2em; }
         .primary-btn { background: #9945FF; }
         .snap-btn { background: #14F195; color: #09090a; }
@@ -200,6 +211,10 @@
                     </label>
                 </div>
 
+                <label for="swap-max-hops" style="margin-top: 12px; margin-bottom: 6px;">Max Route Hops:</label>
+                <select id="swap-max-hops" autocomplete="off" style="margin: 0 0 6px 0;"></select>
+                <p style="color: #8d8d99; font-size: 0.75em; margin: 0 0 15px 0;">Caps sequential swaps in the route (X→A→Y is 2 hops). Fewer hops = shorter transaction message and a cleaner path, sometimes at a slightly worse price. Not saved: starts on Unlimited each time the app loads.</p>
+
                 <button id="btn-generate-swap-msg" class="primary-btn" style="background: #14F195; color: #09090a; margin-bottom: 0;">🔐 GENERATE SWAP MESSAGE</button>
             </div>
 
@@ -256,9 +271,24 @@
             </div>
             <p id="qr-mode-caption" style="text-align: center; color: #8d8d99; font-size: 0.8em; margin-top: -12px; margin-bottom: 12px;">Tap QR to switch to Animated QR mode</p>
 
-            <!-- 3. Text Readout Details Element Layer -->
-            <label id="qr-string-label" style="color:#14F195; display: block; font-size: 0.9em; margin-top: 10px;">Raw Base10 Transaction Message Payload:</label>
-            <div id="qr-string-output" style="background: #09090a; padding: 12px; border-radius: 6px; border: 1px solid #29292e; font-family: monospace; font-size: 0.85em; color: #e1e1e6; word-break: break-all; max-height: 120px; overflow-y: auto; margin-bottom: 15px;">None</div>
+            <!-- 3. Text Readout Details Element Layer.
+                 Every transaction type: a folded "Details" block (human-readable summary + base10 payload).
+                 Falls back to the plain always-visible base10 readout if no summary could be built. -->
+            <div id="tx-details-block">
+                <div id="tx-details-toggle-row" style="display: none; margin: 6px 0 8px 0;">
+                    <button id="btn-toggle-tx-details" class="details-toggle-btn" type="button" aria-expanded="false" aria-controls="tx-details-collapse">▸ Details</button>
+                </div>
+                <div id="tx-details-collapse" class="details-collapse">
+                    <div class="details-collapse-inner">
+                        <div id="tx-details-section" style="display: none; margin-bottom: 12px;">
+                            <div id="tx-details-title" style="color:#14F195; font-size: 0.9em; margin-top: 10px; margin-bottom: 6px;"></div>
+                            <div id="tx-details-list" style="background: #09090a; padding: 12px; border-radius: 6px; border: 1px solid #29292e; font-family: monospace; font-size: 0.85em; color: #e1e1e6; overflow-wrap: anywhere; word-break: break-word;"></div>
+                        </div>
+                        <label id="qr-string-label" style="color:#14F195; display: block; font-size: 0.9em; margin-top: 10px;">Raw Base10 Transaction Message Payload:</label>
+                        <div id="qr-string-output" style="background: #09090a; padding: 12px; border-radius: 6px; border: 1px solid #29292e; font-family: monospace; font-size: 0.85em; color: #e1e1e6; word-break: break-all; max-height: 120px; overflow-y: auto; margin-bottom: 15px;">None</div>
+                    </div>
+                </div>
+            </div>
             
             <!-- 4. Action Trigger Buttons Group Matrix -->
             <button id="btn-modal-scan-signed" class="snap-btn">📷 SCAN SIGNED QR RETURN</button>
