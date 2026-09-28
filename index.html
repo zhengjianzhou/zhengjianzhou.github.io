@@ -41,6 +41,23 @@
         #tx-details-list > .tx-details-footer { margin-top: 8px; padding-top: 8px; border-top: 1px dashed #29292e; color: #14F195; }
         #tx-details-list > .tx-details-footer + .tx-details-footer { margin-top: 3px; padding-top: 0; border-top: none; }
         @media (prefers-reduced-motion: reduce) { .details-collapse.is-collapsible { transition: none; } }
+        /* Foldable page blocks (Transfer Asset / Jupiter Token Swap): header row toggles a slide-down body.
+           Folded unless .is-open. overflow is only clipped while folded/animating (.is-settled lifts it after the
+           slide finishes) so absolutely-positioned dropdowns inside the body are never cut off. */
+        .foldable > .foldable-title { margin: 0; }
+        .foldable-header { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; margin: 0; padding: 2px 0; background: none; border: none; border-radius: 0; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+        .foldable-chevron { flex: none; color: #8d8d99; font-size: 0.9em; transition: transform 0.25s ease; }
+        .foldable.is-open .foldable-chevron { transform: rotate(180deg); }
+        .foldable-body { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 0.25s ease; }
+        .foldable.is-open > .foldable-body { grid-template-rows: 1fr; }
+        .foldable-body > .foldable-inner { overflow: hidden; min-height: 0; }
+        .foldable.is-open.is-settled > .foldable-body > .foldable-inner { overflow: visible; }
+        .foldable-content { padding-top: 12px; }
+        @media (prefers-reduced-motion: reduce) { .foldable-body, .foldable-chevron { transition: none; } }
+        /* Settings modal: grouped cards */
+        .settings-group { background: #141417; border: 1px solid #29292e; border-radius: 10px; padding: 14px 14px 6px 14px; margin-bottom: 14px; }
+        .settings-group-title { margin: 0 0 10px 0; font-size: 0.75em; font-weight: bold; letter-spacing: 0.1em; text-transform: uppercase; color: #8d8d99; }
+        .settings-actions { border-top: 1px solid #29292e; margin-top: 4px; padding-top: 16px; }
         button { color: white; border: none; padding: 18px 20px; border-radius: 8px; font-weight: bold; width: 100%; cursor: pointer; margin-bottom: 12px; font-size: 1.2em; }
         .primary-btn { background: #9945FF; }
         .snap-btn { background: #14F195; color: #09090a; }
@@ -164,62 +181,75 @@
         </div>
     </div>
 
-    <!-- VIEW 2: TRANSFER PANEL -->
+    <!-- VIEW 2: TRANSFER PANEL — two foldable blocks (both folded by default) -->
     <div id="view-transfer" class="hidden-view">
-        <div class="box">
-            <h3>💸 Transfer Asset</h3>
-            <p>Asset: <span id="transfer-token-name" style="color:#14F195; font-weight:bold;">SOL</span></p>
-            <label for="transfer-recipient">Recipient Solana Address:</label>
-            <div style="position: relative; display: flex; gap: 8px; align-items: center;">
-                <input type="text" id="transfer-recipient" placeholder="Enter target public key base58..." style="margin: 0; flex-grow: 1;" autocomplete="off">
-                <button id="btn-scan-recipient" class="snap-btn" type="button" style="width: auto; padding: 10px; margin: 0; white-space: nowrap;">📷 SCAN</button>
-                <div id="quick-pick-wallet-dropdown" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: #141416; border: 1px solid #29292e; border-radius: 6px; max-height: 160px; overflow-y: auto; z-index: 1000; margin-top: 4px; box-shadow: 0px 4px 12px rgba(0,0,0,0.5); padding: 5px;"></div>
+        <div class="box foldable" id="fold-transfer">
+            <h3 class="foldable-title"><button type="button" class="foldable-header" aria-expanded="false" aria-controls="fold-transfer-body"><span>💸 Transfer Asset</span><span class="foldable-chevron" aria-hidden="true">▾</span></button></h3>
+            <div id="fold-transfer-body" class="foldable-body" inert>
+                <div class="foldable-inner">
+                    <div class="foldable-content">
+                        <p>Asset: <span id="transfer-token-name" style="color:#14F195; font-weight:bold;">SOL</span></p>
+                        <label for="transfer-recipient">Recipient Solana Address:</label>
+                        <div style="position: relative; display: flex; gap: 8px; align-items: center;">
+                            <input type="text" id="transfer-recipient" placeholder="Enter target public key base58..." style="margin: 0; flex-grow: 1;" autocomplete="off">
+                            <button id="btn-scan-recipient" class="snap-btn" type="button" style="width: auto; padding: 10px; margin: 0; white-space: nowrap;">📷 SCAN</button>
+                            <div id="quick-pick-wallet-dropdown" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: #141416; border: 1px solid #29292e; border-radius: 6px; max-height: 160px; overflow-y: auto; z-index: 1000; margin-top: 4px; box-shadow: 0px 4px 12px rgba(0,0,0,0.5); padding: 5px;"></div>
+                        </div>
+                        <label for="transfer-amount">Amount:</label>
+                            <div style="display: flex; gap: 8px; align-items: center;">
+                                <!-- Changed type to 'text' to completely disable browser up/down arrows -->
+                                <input type="text" id="transfer-amount" placeholder="0.00" style="margin: 0; margin-bottom: 12px;">
+                                <button id="btn-max-transfer" class="info-btn" type="button" style="width: auto; padding: 10px; margin: 0; margin-bottom: 12px; white-space: nowrap;">MAX</button>
+                            </div>
+                        <button id="btn-generate-transfer-msg" class="primary-btn">🔒 GENERATE TRANSACTION MESSAGE</button>
+                    </div>
+                </div>
             </div>
-            <label for="transfer-amount">Amount:</label>
-                <div style="display: flex; gap: 8px; align-items: center;">
-                    <!-- Changed type to 'text' to completely disable browser up/down arrows -->
-                    <input type="text" id="transfer-amount" placeholder="0.00" style="margin: 0; margin-bottom: 12px;">
-                    <button id="btn-max-transfer" class="info-btn" type="button" style="width: auto; padding: 10px; margin: 0; margin-bottom: 12px; white-space: nowrap;">MAX</button>
-                </div>
-            <button id="btn-generate-transfer-msg" class="primary-btn">🔒 GENERATE TRANSACTION MESSAGE</button>
-            <!-- NEW: DEDICATED TOKEN SWAP LAYER BLOCK CARD -->
-            <div class="box" style="margin-top: 25px; margin-bottom: 25px; border: 1px dashed #9945FF; background: #0c0c0e; padding: 15px; border-radius: 10px;">
-                <h4 style="color: #9945FF; margin: 0 0 10px 0; font-size: 1.1em;">🔀 Jupiter Token Swap</h4>
-
-                <label for="swap-target-mint">Swap To Asset:</label>
-                <div style="position: relative;">
-                    <input type="text" id="swap-target-mint" placeholder="Select destination mint token..." style="margin-bottom: 12px;" autocomplete="off">
-                    <!-- Predefined Dictionary Search Overlay Dropdown Container -->
-                    <div id="swap-token-dropdown" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: #141416; border: 1px solid #29292e; border-radius: 6px; max-height: 180px; overflow-y: auto; z-index: 1050; padding: 5px; box-shadow: 0px 4px 12px rgba(0,0,0,0.5);"></div>
-                </div>
-
-                <label for="swap-amount">Swap Amount:</label>
-                <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 15px;">
-                    <input type="text" id="swap-amount" placeholder="0.00" style="margin: 0;">
-                    <button id="btn-max-swap" class="info-btn" type="button" style="width: auto; padding: 10px; margin: 0; white-space: nowrap;">MAX</button>
-                </div>
-                <label style="margin-top: 12px; margin-bottom: 6px;">Execution Speed Mode:</label>
-                <div style="display: flex; gap: 15px; background: #09090a; padding: 12px; border: 1px solid #29292e; border-radius: 8px; margin-bottom: 15px;">
-                    <label style="display: inline-flex; align-items: center; gap: 6px; margin: 0; cursor: pointer; color: #fff;">
-                        <input type="radio" name="swap-speed-mode" value="ECO" checked style="width: auto; margin: 0;"> ECO
-                    </label>
-                    <label style="display: inline-flex; align-items: center; gap: 6px; margin: 0; cursor: pointer; color: #fff;">
-                        <input type="radio" name="swap-speed-mode" value="STANDARD" style="width: auto; margin: 0;"> Standard
-                    </label>
-                    <label style="display: inline-flex; align-items: center; gap: 6px; margin: 0; cursor: pointer; color: #fff;">
-                        <input type="radio" name="swap-speed-mode" value="FAST" style="width: auto; margin: 0;"> Fast
-                    </label>
-                </div>
-
-                <label for="swap-max-hops" style="margin-top: 12px; margin-bottom: 6px;">Max Route Hops:</label>
-                <select id="swap-max-hops" autocomplete="off" style="margin: 0 0 6px 0;"></select>
-                <p style="color: #8d8d99; font-size: 0.75em; margin: 0 0 15px 0;">Caps sequential swaps in the route (X→A→Y is 2 hops). Fewer hops = shorter transaction message and a cleaner path, sometimes at a slightly worse price. Not saved: starts on Unlimited each time the app loads.</p>
-
-                <button id="btn-generate-swap-msg" class="primary-btn" style="background: #14F195; color: #09090a; margin-bottom: 0;">🔐 GENERATE SWAP MESSAGE</button>
-            </div>
-
-            <button id="btn-back-transfer" class="cancel-btn">⬅️ BACK TO DASHBOARD</button>
         </div>
+
+        <!-- DEDICATED TOKEN SWAP LAYER BLOCK CARD -->
+        <div class="box foldable" id="fold-swap" style="border: 1px dashed #9945FF; background: #0c0c0e;">
+            <h4 class="foldable-title" style="color: #9945FF; font-size: 1.1em;"><button type="button" class="foldable-header" aria-expanded="false" aria-controls="fold-swap-body"><span>🔀 Jupiter Token Swap</span><span class="foldable-chevron" aria-hidden="true">▾</span></button></h4>
+            <div id="fold-swap-body" class="foldable-body" inert>
+                <div class="foldable-inner">
+                    <div class="foldable-content">
+
+                            <label for="swap-target-mint">Swap To Asset:</label>
+                            <div style="position: relative;">
+                                <input type="text" id="swap-target-mint" placeholder="Select destination mint token..." style="margin-bottom: 12px;" autocomplete="off">
+                                <!-- Predefined Dictionary Search Overlay Dropdown Container -->
+                                <div id="swap-token-dropdown" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: #141416; border: 1px solid #29292e; border-radius: 6px; max-height: 180px; overflow-y: auto; z-index: 1050; padding: 5px; box-shadow: 0px 4px 12px rgba(0,0,0,0.5);"></div>
+                            </div>
+
+                            <label for="swap-amount">Swap Amount:</label>
+                            <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 15px;">
+                                <input type="text" id="swap-amount" placeholder="0.00" style="margin: 0;">
+                                <button id="btn-max-swap" class="info-btn" type="button" style="width: auto; padding: 10px; margin: 0; white-space: nowrap;">MAX</button>
+                            </div>
+                            <label style="margin-top: 12px; margin-bottom: 6px;">Execution Speed Mode:</label>
+                            <div style="display: flex; gap: 15px; background: #09090a; padding: 12px; border: 1px solid #29292e; border-radius: 8px; margin-bottom: 15px;">
+                                <label style="display: inline-flex; align-items: center; gap: 6px; margin: 0; cursor: pointer; color: #fff;">
+                                    <input type="radio" name="swap-speed-mode" value="ECO" checked style="width: auto; margin: 0;"> ECO
+                                </label>
+                                <label style="display: inline-flex; align-items: center; gap: 6px; margin: 0; cursor: pointer; color: #fff;">
+                                    <input type="radio" name="swap-speed-mode" value="STANDARD" style="width: auto; margin: 0;"> Standard
+                                </label>
+                                <label style="display: inline-flex; align-items: center; gap: 6px; margin: 0; cursor: pointer; color: #fff;">
+                                    <input type="radio" name="swap-speed-mode" value="FAST" style="width: auto; margin: 0;"> Fast
+                                </label>
+                            </div>
+
+                            <label for="swap-max-hops" style="margin-top: 12px; margin-bottom: 6px;">Max Route Hops:</label>
+                            <select id="swap-max-hops" autocomplete="off" style="margin: 0 0 6px 0;"></select>
+                            <p style="color: #8d8d99; font-size: 0.75em; margin: 0 0 15px 0;">Caps sequential swaps in the route (X→A→Y is 2 hops). Fewer hops = shorter transaction message and a cleaner path, sometimes at a slightly worse price. Not saved: starts on Unlimited each time the app loads.</p>
+
+                            <button id="btn-generate-swap-msg" class="primary-btn" style="background: #14F195; color: #09090a; margin-bottom: 0;">🔐 GENERATE SWAP MESSAGE</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <button id="btn-back-transfer" class="cancel-btn">⬅️ BACK TO DASHBOARD</button>
     </div>
 
     <!-- VIEW 3: STAKING PANEL -->
@@ -326,41 +356,56 @@
 
     <div id="rpc-status-footnote" style="text-align: center; font-size: 0.8em; color: #8d8d99; margin-top: 25px; padding-bottom: 20px; font-family: monospace; display: none;"></div>
 
-    <!-- SETTINGS MODAL: custom RPC endpoint, cached in localStorage -->
+    <!-- SETTINGS MODAL: grouped as RPC / Passcode / Keystone + Animated QR / actions -->
     <div id="settings-modal" class="modal" style="display: none;">
         <div class="modal-content">
             <h3 style="color: #14F195; text-align: center; margin-bottom: 15px;">Settings</h3>
 
-            <label for="settings-rpc-url" style="color: #8d8d99; font-size: 0.9em;">Custom Solana RPC URL:</label>
-            <input type="text" id="settings-rpc-url" placeholder="Leave blank for default mainnet node" style="margin-bottom: 20px;">
-
-            <button id="btn-open-keystone-pairing" class="info-btn" type="button" style="margin-bottom: 8px;">🔗 PAIR KEYSTONE DEVICE</button>
-            <p style="color: #8d8d99; font-size: 0.75em; margin-bottom: 20px;">Scans your Keystone's account-export QR (public keys only — the same one it shows for Solflare, Backpack, etc.) to learn the exact path and fingerprint for each account, so the derivation path never has to be guessed.</p>
-
-            <button id="btn-open-passcode-settings" class="info-btn" type="button" style="margin-bottom: 8px;">🔒 SET PASSCODE</button>
-            <p style="color: #8d8d99; font-size: 0.75em; margin-bottom: 10px;">Optional. Locks the app behind a passcode until this tab is closed — reopening a background tab never re-prompts, only opening fresh does. Tied to this browser only; not included in Export/Import Settings.</p>
-
-            <label id="wallet-switch-guard-label" style="display: flex; align-items: center; gap: 8px; color: #8d8d99; font-size: 0.85em; margin-bottom: 20px; cursor: pointer;">
-                <input type="checkbox" id="settings-require-passcode-wallet-switch" style="width: auto; margin: 0; padding: 0;">
-                <span>Require passcode to switch wallets</span>
-            </label>
-
-            <label for="settings-qr-fragment-length" style="color: #8d8d99; font-size: 0.9em;">Animated QR Fragment Size (chars):</label>
-            <input type="number" id="settings-qr-fragment-length" placeholder="800" style="margin-bottom: 8px;">
-            <p style="color: #8d8d99; font-size: 0.75em; margin-bottom: 12px;">Lower = simpler/larger QR per frame but more frames to scan. Higher = denser QR but fewer frames. Default 800.</p>
-
-            <label for="settings-qr-frame-interval" style="color: #8d8d99; font-size: 0.9em;">Animated QR Frame Interval (ms):</label>
-            <input type="number" id="settings-qr-frame-interval" placeholder="150" style="margin-bottom: 8px;">
-            <p style="color: #8d8d99; font-size: 0.75em; margin-bottom: 20px;">How long each frame stays on screen before cycling. Raise this if your camera struggles to capture frames cleanly. Default 150.</p>
-
-            <button id="btn-save-settings" class="snap-btn" type="button" style="margin-bottom: 10px;">💾 SAVE & RELOAD</button>
-
-            <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-                <button id="btn-export-settings" class="info-btn" type="button" style="flex: 1; margin: 0;">⬆️ EXPORT</button>
-                <button id="btn-import-settings" class="info-btn" type="button" style="flex: 1; margin: 0;">⬇️ IMPORT</button>
+            <!-- 1) RPC -->
+            <div class="settings-group">
+                <div class="settings-group-title">RPC</div>
+                <label for="settings-rpc-url" style="color: #8d8d99; font-size: 0.9em; margin-top: 0;">Custom Solana RPC URL:</label>
+                <input type="text" id="settings-rpc-url" placeholder="Leave blank for default mainnet node" style="margin-bottom: 8px;">
             </div>
 
-            <button id="btn-close-settings" class="cancel-btn" style="margin-bottom: 0; width: 100%;">CANCEL</button>
+            <!-- 2) PASSCODE -->
+            <div class="settings-group">
+                <div class="settings-group-title">Passcode</div>
+                <button id="btn-open-passcode-settings" class="info-btn" type="button" style="margin-bottom: 8px;">🔒 SET PASSCODE</button>
+                <p style="color: #8d8d99; font-size: 0.75em; margin-bottom: 10px;">Optional. Locks the app behind a passcode until this tab is closed — reopening a background tab never re-prompts, only opening fresh does. Tied to this browser only; not included in Export/Import Settings.</p>
+
+                <label id="wallet-switch-guard-label" style="display: flex; align-items: center; gap: 8px; color: #8d8d99; font-size: 0.85em; margin-top: 4px; margin-bottom: 8px; cursor: pointer;">
+                    <input type="checkbox" id="settings-require-passcode-wallet-switch" style="width: auto; margin: 0; padding: 0;">
+                    <span>Require passcode to switch wallets</span>
+                </label>
+            </div>
+
+            <!-- 3) KEYSTONE + ANIMATED QR -->
+            <div class="settings-group">
+                <div class="settings-group-title">Keystone &amp; Animated QR</div>
+                <button id="btn-open-keystone-pairing" class="info-btn" type="button" style="margin-bottom: 8px;">🔗 PAIR KEYSTONE DEVICE</button>
+                <p style="color: #8d8d99; font-size: 0.75em; margin-bottom: 12px;">Scans your Keystone's account-export QR (public keys only — the same one it shows for Solflare, Backpack, etc.) to learn the exact path and fingerprint for each account, so the derivation path never has to be guessed.</p>
+
+                <label for="settings-qr-fragment-length" style="color: #8d8d99; font-size: 0.9em;">Animated QR Fragment Size (chars):</label>
+                <input type="number" id="settings-qr-fragment-length" placeholder="800" style="margin-bottom: 8px;">
+                <p style="color: #8d8d99; font-size: 0.75em; margin-bottom: 12px;">Lower = simpler/larger QR per frame but more frames to scan. Higher = denser QR but fewer frames. Default 800.</p>
+
+                <label for="settings-qr-frame-interval" style="color: #8d8d99; font-size: 0.9em;">Animated QR Frame Interval (ms):</label>
+                <input type="number" id="settings-qr-frame-interval" placeholder="150" style="margin-bottom: 8px;">
+                <p style="color: #8d8d99; font-size: 0.75em; margin-bottom: 8px;">How long each frame stays on screen before cycling. Raise this if your camera struggles to capture frames cleanly. Default 150.</p>
+            </div>
+
+            <!-- 4) SAVE / EXPORT / IMPORT / CANCEL -->
+            <div class="settings-actions">
+                <button id="btn-save-settings" class="snap-btn" type="button" style="margin-bottom: 10px;">💾 SAVE & RELOAD</button>
+
+                <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                    <button id="btn-export-settings" class="info-btn" type="button" style="flex: 1; margin: 0;">⬆️ EXPORT</button>
+                    <button id="btn-import-settings" class="info-btn" type="button" style="flex: 1; margin: 0;">⬇️ IMPORT</button>
+                </div>
+
+                <button id="btn-close-settings" class="cancel-btn" style="margin-bottom: 0; width: 100%;">CANCEL</button>
+            </div>
         </div>
     </div>
 
