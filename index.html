@@ -58,6 +58,20 @@
         .settings-group { background: #141417; border: 1px solid #29292e; border-radius: 10px; padding: 14px 14px 6px 14px; margin-bottom: 14px; }
         .settings-group-title { margin: 0 0 10px 0; font-size: 0.75em; font-weight: bold; letter-spacing: 0.1em; text-transform: uppercase; color: #8d8d99; }
         .settings-actions { border-top: 1px solid #29292e; margin-top: 4px; padding-top: 16px; }
+        /* Help ("?") button — deliberately muted so it blends in rather than reads as a primary action */
+        .help-btn { width: 34px; height: 34px; padding: 0; margin: 0; border-radius: 50%; background: #1a1a1e; color: #6a6a74; border: 1px solid #29292e; font-size: 1em; font-weight: bold; line-height: 1; cursor: pointer; transition: color 0.15s, border-color 0.15s; }
+        .help-btn:hover, .help-btn:focus-visible { color: #8d8d99; border-color: #3a3a42; }
+        /* Help modal content */
+        #help-modal .modal-content { max-width: 540px; text-align: left; }
+        .help-content h4 { color: #14F195; font-size: 1.05em; margin: 22px 0 8px 0; }
+        .help-content h4:first-child { margin-top: 0; }
+        .help-content p, .help-content li { color: #c7c7cf; font-size: 0.92em; line-height: 1.55; margin: 0 0 8px 0; }
+        .help-content ul, .help-content ol { margin: 0 0 8px 0; padding-left: 1.3em; }
+        .help-content b { color: #e1e1e6; }
+        .help-content code { background: #09090a; border: 1px solid #29292e; border-radius: 4px; padding: 1px 5px; font-size: 0.9em; color: #14F195; }
+        .help-content pre { background: #09090a; border: 1px solid #29292e; border-radius: 6px; padding: 10px 12px; overflow-x: auto; margin: 0 0 10px 0; }
+        .help-content pre code { background: none; border: none; padding: 0; color: #e1e1e6; }
+        .help-content hr { border: none; border-top: 1px solid #29292e; margin: 18px 0; }
         button { color: white; border: none; padding: 18px 20px; border-radius: 8px; font-weight: bold; width: 100%; cursor: pointer; margin-bottom: 12px; font-size: 1.2em; }
         .primary-btn { background: #9945FF; }
         .snap-btn { background: #14F195; color: #09090a; }
@@ -136,7 +150,10 @@
       })();
     </script>
 
-    <h2>Semaj's Solana Wallet</h2>
+    <div style="position: relative;">
+        <h2>Semaj's Solana Wallet</h2>
+        <button id="btn-open-help" class="help-btn" type="button" title="Help" aria-label="Help" style="position: absolute; top: 50%; right: 0; transform: translateY(-50%);">ℹ️</button>
+    </div>
     <div id="own-wallet-card" style="background: #1a1a1e; border: 1px solid #29292e; border-radius: 12px; padding: 20px; text-align: center; margin-bottom: 20px; display: none;">
         <button id="toggle-qr-btn" style="background: #14F195; color: #000; border: none; padding: 8px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; margin-bottom: 12px; font-size: 0.9em; transition: opacity 0.2s;">
             Show QR Code
@@ -406,6 +423,130 @@
 
                 <button id="btn-close-settings" class="cancel-btn" style="margin-bottom: 0; width: 100%;">CANCEL</button>
             </div>
+        </div>
+    </div>
+
+    <!-- HELP MODAL: one long numbered reference page -->
+    <div id="help-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <h3 style="color: #14F195; text-align: center; margin-bottom: 15px;">Help &amp; Guide</h3>
+            <div class="help-content">
+
+                <p style="background: #0c0c0e; border: 1px dashed #9945FF; border-radius: 8px; padding: 10px 12px; color: #c7c7cf;">This app is read-only by itself — it works together with the <b>Semaj Solana Wallet</b> (the hardware signing device), or with <b>Keystone</b> QR code signing devices.</p>
+
+                <h4>1. What this app is</h4>
+                <p>This is a <b>watch-only</b> Solana wallet. It never holds, imports, or asks for a private key or seed phrase — it only ever works with public addresses. To actually sign a transaction, it hands the unsigned transaction to a separate signing device (a Keystone hardware wallet, or any other device that understands its QR formats) as a QR code, and scans back a QR code containing the signature. The private key never touches this app, this browser, or this device at any point.</p>
+
+                <h4>2. The dashboard</h4>
+                <p><b>TOTAL VALUE</b> at the top is your staked SOL plus your token balances, combined into one USD figure.</p>
+                <p><b>Native Staking</b> lists any stake accounts tied to the current wallet, with their state (Activating, Active, Deactivating/"Cooling Down", or Deactivated) and the right action button for that state.</p>
+                <p><b>Token Assets &amp; Balances</b> lists SOL and every SPL token with a non-zero balance.</p>
+                <p><b>Wallet Synchronization</b> has: <b>SYNC</b> (re-fetch balances and stake accounts), <b>SOLSCAN</b> (open this wallet on the Solscan block explorer), <b>MANAGE WALLETS</b> (see §3), and the ⚙️ gear icon (Settings, see §11).</p>
+
+                <h4>3. Managing wallets</h4>
+                <p>This app can track several watch-only addresses. Open <b>MANAGE WALLETS</b> to add one (paste or scan a Solana address), switch the active wallet, or delete one. A wallet that's been paired with a Keystone device (see §9) shows a small ℹ️ icon — tap it to see the saved derivation path and device fingerprint for that address.</p>
+                <p>If you've turned on "Require passcode to switch wallets" in Settings, switching to a different saved wallet will ask for your passcode first.</p>
+
+                <h4>4. Transferring SOL &amp; tokens</h4>
+                <p>Open <b>Transfer Asset</b> from the dashboard, enter or scan a recipient address, and an amount (or tap <code>MAX</code>). <b>GENERATE TRANSACTION MESSAGE</b> builds the unsigned transaction and opens the signing dialog — see §7.</p>
+                <p>The Transfer Asset and Jupiter Token Swap blocks are foldable — tap the header to open or close either one.</p>
+
+                <h4>5. Swapping tokens with Jupiter</h4>
+                <p>Inside the swap block: pick a destination token, an amount, an <b>Execution Speed Mode</b> (ECO/Standard/Fast — this sets both the priority fee and the slippage tolerance: ECO is 0.05% slippage, Standard is 0.1%, Fast is 0.5%), and optionally a <b>Max Route Hops</b> limit.</p>
+                <p><b>Max Route Hops</b> caps how many sequential swap legs a route may use (X→A→B→Y is 3 hops) — a lower limit means a shorter transaction and a cleaner path, sometimes at a slightly worse price. It defaults to <b>Unlimited</b> every time the app loads and is <b>not saved</b> between sessions — if you want a limit, you pick it again each time.</p>
+                <p><b>GENERATE SWAP MESSAGE</b> fetches a quote from Jupiter, builds the swap transaction, and opens the signing dialog with a folded <b>Details</b> block showing the route (which pools it uses and the amount at each hop), the effective rate, the projected output amount, the transaction fee, and the slippage tolerance.</p>
+
+                <h4>6. Staking SOL</h4>
+                <p>Open <b>Delegate Stake</b>, choose a validator from the list (or paste/scan a validator vote account address manually) and an amount, then <b>GENERATE STAKING MESSAGE</b>.</p>
+                <p>A stake account moves through states: <b>Activating</b> → <b>Active</b> → (after you deactivate it) <b>Deactivating</b>, shown as "Cooling Down" with no action available — then once the epoch turns over, <b>Deactivated</b>, which is when <b>Withdraw</b> becomes available and your SOL (plus the rent reserve) returns to your wallet.</p>
+
+                <h4>7. Signing a transaction</h4>
+                <p>After generating any transaction, a QR code appears for your signing device to scan. There are two QR formats, and you can switch between them by tapping the QR code itself:</p>
+                <ul>
+                    <li><b>Standard (Base10)</b> — a single static QR code, and the digits are also shown as text underneath, for devices that read a plain numeric payload.</li>
+                    <li><b>Keystone Animated QR</b> — Keystone's own UR/CBOR format. For a wallet that's been paired (§9), this automatically includes the exact derivation path and device fingerprint, which is what lets Keystone verify the request belongs to it.</li>
+                </ul>
+                <p>Below the QR, a folded <b>Details</b> block (tap to open) shows a plain-language summary of what you're about to sign — amounts, addresses, validator, transaction fee, and so on — above the raw payload text.</p>
+
+                <h4>8. Scanning a signed response back</h4>
+                <p>Once your device has signed, tap <b>📷 SCAN SIGNED QR RETURN</b> to scan its response with your camera, or use <b>📂 LOAD FROM QR CODE IMAGE</b> to pick a photo of it instead. The app automatically detects whether the scanned data is a plain Base10 signature or a Keystone UR response and handles either one the same way — broadcasting the fully signed transaction to the network and showing a link to view it on Solscan.</p>
+
+                <h4>9. Pairing a Keystone device</h4>
+                <p>In <b>Settings → Keystone &amp; Animated QR → 🔗 PAIR KEYSTONE DEVICE</b>, scan the account-export QR that Keystone shows when you choose to connect it to a wallet app (the same screen it would use for Solflare, Backpack, etc. — nothing Keystone-specific has to be set up for this app). This reads only public keys: the account's address, its exact derivation path, and the device's fingerprint (a non-secret identifier derived from the public key, not the seed). Saving the result against a wallet means every future Keystone Animated QR for that address is built with the correct path and fingerprint automatically, instead of guessing.</p>
+
+                <h4>10. The optional passcode lock</h4>
+                <p>Set one in <b>Settings → Passcode</b>. It's a numeric code (4+ digits), entered with an on-screen keypad. Once set, the app shows a lock screen on every fresh page load or reload — but <b>not</b> when you just switch back to an already-open tab, since that isn't a fresh load.</p>
+                <p><b>Require passcode to switch wallets</b> (also in Settings) additionally asks for the passcode whenever you switch to a different saved wallet, not just on page load.</p>
+                <p>The passcode is stored encrypted and tied to this specific browser — it cannot be unlocked from a copy of the data on another device, and it is deliberately <b>never</b> included in Export/Import Settings, so it has to be set up again on each device on purpose.</p>
+                <p>This is a convenience lock for this screen, not encryption of any funds — remember that this app never holds a private key in the first place (§1), so there's nothing for the passcode to protect beyond who can open the app on this device.</p>
+
+                <h4>11. Settings overview</h4>
+                <p>Settings is grouped into: <b>RPC</b> (a custom Solana RPC endpoint, if you don't want the default), <b>Passcode</b> (§10), <b>Keystone &amp; Animated QR</b> (device pairing, and the animated QR's fragment size / frame interval — lower fragment size means simpler but more numerous QR frames; raise the frame interval if your camera struggles to keep up), and <b>Save &amp; Reload / Export / Import</b> at the bottom.</p>
+
+                <h4>12. Export &amp; Import Settings</h4>
+                <p>From Settings, <b>⬆️ EXPORT</b> shows all of your settings as one JSON block you can copy and save somewhere safe; <b>⬇️ IMPORT</b> lets you paste a JSON block back in. This covers your RPC URL, animated-QR tuning, saved wallet addresses, Keystone pairings, the wallet-switch passcode preference, and any additional SPL tokens you've added (§13) — but never the passcode itself (§10), which always has to be set up by hand on each device. An example:</p>
+                <pre><code>{
+  "custom_solana_rpc_url": "",
+  "qr_max_fragment_length": "800",
+  "qr_frame_interval_ms": "150",
+  "solana_wallets_list": [
+    "Hevpzti8zq7UPbZyh9CZjQh8zVFetXq3xpCSZ4L13NNa"
+  ],
+  "last_solana_address": "Hevpzti8zq7UPbZyh9CZjQh8zVFetXq3xpCSZ4L13NNa",
+  "keystone_paired_wallets": {
+    "Hevpzti8zq7UPbZyh9CZjQh8zVFetXq3xpCSZ4L13NNa": {
+      "fingerprintHex": "4b87825b",
+      "path": "m/44'/501'/0'"
+    }
+  },
+  "passcode_require_for_wallet_switch": "false",
+  "additional_spl_tokens": {
+    "57Q2HhPawWgj1UQz4oz7o6gg1RHNFZPmGjfoAt2s7AKq": {
+      "name": "My Example Token",
+      "symbol": "MYT",
+      "decimals": 6
+    }
+  }
+}</code></pre>
+                <p>Importing only changes the keys present in the pasted JSON — anything you leave out is left exactly as it was.</p>
+
+                <h4>13. Adding your own SPL tokens</h4>
+                <p>There's no separate "add token" button — this is done entirely through the Export/Import JSON from §12, inside an <code>additional_spl_tokens</code> block. The mint address is the key, and each entry needs only three fields:</p>
+                <ul>
+                    <li><code>name</code> — the display name</li>
+                    <li><code>symbol</code> — the short ticker shown in lists</li>
+                    <li><code>decimals</code> — the token's decimal places (an on-chain property of the mint)</li>
+                </ul>
+                <p>Other fields (<code>logo</code>, <code>isVerified</code>, <code>marketCap</code>, or anything else) are optional and simply carried along if you include them. A minimal example:</p>
+                <pre><code>"additional_spl_tokens": {
+  "ETCNVK5ugnmXhzRuLZDAy5yveXijciv6P7GRWPQRLRzu": {
+    "name": "Example Coin",
+    "symbol": "EXC",
+    "decimals": 6
+  }
+}</code></pre>
+                <p>The mint address is the token's identity. A mint that matches one of the app's built-in tokens can never be added or overridden this way — the built-in entry always wins, and any duplicate is simply dropped, both when you import it and if it's ever exported again. Exporting also only ever includes tokens you've added — the built-in list itself is never part of the export.</p>
+
+                <h4>14. Security model — good to know</h4>
+                <ul>
+                    <li>This app never sees, stores, or asks for a private key or seed phrase, at any point.</li>
+                    <li>Signing always happens on a separate device, over a QR code — not over the network, not over Bluetooth.</li>
+                    <li>The Keystone pairing data and fingerprint (§9) are public-key information, not secrets.</li>
+                    <li>The passcode (§10) protects access to this app on this device/browser only — it is not a vault or encryption of any asset.</li>
+                    <li>Everything in Settings Export/Import (§12) is non-secret by design — RPC preferences, watch-only addresses, public pairing data — which is why a plain copy-paste JSON file is a reasonable way to back it up.</li>
+                </ul>
+
+                <h4>15. Troubleshooting &amp; tips</h4>
+                <ul>
+                    <li><b>Camera won't scan a QR cleanly:</b> raise the Animated QR Frame Interval in Settings, or get more light and distance from the screen it's reading.</li>
+                    <li><b>RPC feels slow or rate-limited:</b> set a custom RPC URL in Settings (RPC group).</li>
+                    <li><b>Keystone rejects a transaction as "not belonging to this wallet":</b> pair the device for that wallet (§9) so the correct path and fingerprint are used automatically, instead of relying on the manual default path.</li>
+                    <li><b>A swap route looks too complex / the message is too large:</b> set a lower Max Route Hops before generating the swap (§5).</li>
+                    <li><b>Want to move your setup to a new device or browser:</b> use Export/Import Settings (§12) for everything except the passcode, which has to be set up again by hand, and any Keystone pairing stays correct because it travels with the export.</li>
+                </ul>
+
+            </div>
+            <button id="btn-close-help" class="cancel-btn" style="margin-top: 15px; margin-bottom: 0; width: 100%;">CLOSE</button>
         </div>
     </div>
 
