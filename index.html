@@ -36,6 +36,7 @@
         .details-collapse.is-collapsible { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 0.25s ease; }
         .details-collapse.is-collapsible.is-open { grid-template-rows: 1fr; }
         .details-collapse.is-collapsible > .details-collapse-inner { overflow: hidden; min-height: 0; }
+        .details-toggle-btn:disabled { opacity: 0.6; cursor: default; }
         .details-toggle-btn { width: auto; padding: 9px 18px; margin: 0; font-size: 0.85em; font-weight: normal; background: #1e1e24; color: #8d8d99; border: 1px solid #29292e; border-radius: 16px; }
         #tx-details-list > div + div { margin-top: 4px; }
         #tx-details-list > .tx-details-footer { margin-top: 8px; padding-top: 8px; border-top: 1px dashed #29292e; color: #14F195; }
@@ -61,6 +62,26 @@
         /* Help ("?") button — deliberately muted so it blends in rather than reads as a primary action */
         .help-btn { width: 34px; height: 34px; padding: 0; margin: 0; border-radius: 50%; background: #1a1a1e; color: #6a6a74; border: 1px solid #29292e; font-size: 1em; font-weight: bold; line-height: 1; cursor: pointer; transition: color 0.15s, border-color 0.15s; }
         .help-btn:hover, .help-btn:focus-visible { color: #8d8d99; border-color: #3a3a42; }
+        /* Themed popup dialog (replaces native alert()/confirm()) — see ui/themedDialog.js.
+           Sits above every other modal (1000) but below the passcode lock screen (99999). */
+        #app-dialog { z-index: 2000; }
+        /* two classes: must out-rank the generic .modal-content rule, which is defined LATER in this sheet */
+        .modal-content.app-dialog-card { max-width: 420px; border-top: 3px solid #14F195; padding: 20px 22px 18px 22px; }
+        .app-dialog-card[data-tone="error"] { border-top-color: #dc3545; }
+        .app-dialog-card[data-tone="warning"] { border-top-color: #f0b429; }
+        .app-dialog-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+        .app-dialog-icon { font-size: 1.4em; line-height: 1; flex: none; }
+        .app-dialog-title { margin: 0; font-size: 1.05em; letter-spacing: 0.02em; color: #14F195; overflow-wrap: anywhere; }
+        .app-dialog-card[data-tone="error"] .app-dialog-title { color: #dc3545; }
+        .app-dialog-card[data-tone="warning"] .app-dialog-title { color: #f0b429; }
+        .app-dialog-message { color: #c7c7cf; font-size: 0.93em; line-height: 1.55; white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; max-height: 52vh; overflow-y: auto; margin-bottom: 18px; }
+        .app-dialog-message.is-mono { font-family: monospace; font-size: 0.85em; color: #e1e1e6; background: #09090a; border: 1px solid #29292e; border-radius: 6px; padding: 10px 12px; }
+        .app-dialog-actions { display: flex; gap: 10px; }
+        .app-dialog-btn { flex: 1; margin: 0; padding: 13px 14px; font-size: 1em; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; width: auto; }
+        .app-dialog-btn-primary { background: #14F195; color: #09090a; }
+        .app-dialog-btn-danger { background: #dc3545; color: #fff; }
+        .app-dialog-btn-secondary { background: #29292e; color: #c7c7cf; }
+        .app-dialog-btn:focus-visible { outline: 2px solid #9945FF; outline-offset: 2px; }
         /* Help modal content */
         #help-modal .modal-content { max-width: 540px; text-align: left; }
         .help-content h4 { color: #14F195; font-size: 1.05em; margin: 22px 0 8px 0; }
@@ -322,8 +343,9 @@
                  Every transaction type: a folded "Details" block (human-readable summary + base10 payload).
                  Falls back to the plain always-visible base10 readout if no summary could be built. -->
             <div id="tx-details-block">
-                <div id="tx-details-toggle-row" style="display: none; margin: 6px 0 8px 0;">
+                <div id="tx-details-toggle-row" style="display: none; margin: 6px 0 8px 0; align-items: center; gap: 8px;">
                     <button id="btn-toggle-tx-details" class="details-toggle-btn" type="button" aria-expanded="false" aria-controls="tx-details-collapse">▸ Details</button>
+                    <button id="btn-refresh-tx" class="details-toggle-btn" type="button" title="Get a fresh blockhash — use this if signing took a while or the transaction expired" style="display: none; margin-left: auto;">↻ Refresh</button>
                 </div>
                 <div id="tx-details-collapse" class="details-collapse">
                     <div class="details-collapse-inner">
@@ -446,9 +468,11 @@
                 <h4>3. Managing wallets</h4>
                 <p>This app can track several watch-only addresses. Open <b>MANAGE WALLETS</b> to add one (paste or scan a Solana address), switch the active wallet, or delete one. A wallet that's been paired with a Keystone device (see §9) shows a small ℹ️ icon — tap it to see the saved derivation path and device fingerprint for that address.</p>
                 <p>If you've turned on "Require passcode to switch wallets" in Settings, switching to a different saved wallet will ask for your passcode first.</p>
+                <p><b>Address safety check.</b> Before an address is added (pasted or scanned), the app checks that it is a valid Solana address and looks it up on-chain. An ordinary wallet is added straight away. Token accounts, stake accounts, program or PDA accounts, and anything else that isn't a wallet are refused, with an explanation of what the address actually is. An address that doesn't exist on-chain yet (it has never received SOL) is added only after you confirm — that is normal for a brand-new wallet, but a mistyped address looks exactly the same, so compare it with the original. If the on-chain check can't complete (for example the RPC node is unreachable), the address is not added.</p>
 
                 <h4>4. Transferring SOL &amp; tokens</h4>
                 <p>Open <b>Transfer Asset</b> from the dashboard, enter or scan a recipient address, and an amount (or tap <code>MAX</code>). <b>GENERATE TRANSACTION MESSAGE</b> builds the unsigned transaction and opens the signing dialog — see §7.</p>
+                <p>The recipient gets the same <b>address safety check</b> described in §3, before anything is built: an invalid address, a token/stake/program account, or an address that can't be a wallet is blocked with an explanation, and a brand-new address asks you to confirm first. If the on-chain check can't complete, no transaction is generated.</p>
                 <p>The Transfer Asset and Jupiter Token Swap blocks are foldable — tap the header to open or close either one.</p>
 
                 <h4>5. Swapping tokens with Jupiter</h4>
@@ -467,6 +491,7 @@
                     <li><b>Keystone Animated QR</b> — Keystone's own UR/CBOR format. For a wallet that's been paired (§9), this automatically includes the exact derivation path and device fingerprint, which is what lets Keystone verify the request belongs to it.</li>
                 </ul>
                 <p>Below the QR, a folded <b>Details</b> block (tap to open) shows a plain-language summary of what you're about to sign — amounts, addresses, validator, transaction fee, and so on — above the raw payload text.</p>
+                <p><b>↻ Refresh</b> (on the right of the Details button) rebuilds the same transaction with a fresh blockhash. A blockhash is only valid for about a minute, so if signing took a while — or the app tells you the transaction has expired — tap Refresh and sign again. It uses exactly the same recipient, amount, validator or swap settings as before; for a Jupiter swap it also fetches a fresh quote, so the Details figures may change slightly. Anything you had already signed for the old version no longer applies, so sign the refreshed QR instead.</p>
 
                 <h4>8. Scanning a signed response back</h4>
                 <p>Once your device has signed, tap <b>📷 SCAN SIGNED QR RETURN</b> to scan its response with your camera, or use <b>📂 LOAD FROM QR CODE IMAGE</b> to pick a photo of it instead. The app automatically detects whether the scanned data is a plain Base10 signature or a Keystone UR response and handles either one the same way — broadcasting the fully signed transaction to the network and showing a link to view it on Solscan.</p>
@@ -541,6 +566,7 @@
                     <li><b>Camera won't scan a QR cleanly:</b> raise the Animated QR Frame Interval in Settings, or get more light and distance from the screen it's reading.</li>
                     <li><b>RPC feels slow or rate-limited:</b> set a custom RPC URL in Settings (RPC group).</li>
                     <li><b>Keystone rejects a transaction as "not belonging to this wallet":</b> pair the device for that wallet (§9) so the correct path and fingerprint are used automatically, instead of relying on the manual default path.</li>
+                    <li><b>"Transaction expired" after scanning the signed QR:</b> the blockhash it was built with is no longer valid, so the network rejected it and nothing was sent. Tap <b>↻ Refresh</b> under the QR code, then sign again. (If an earlier attempt might have gone through, check the wallet on Solscan first.)</li>
                     <li><b>A swap route looks too complex / the message is too large:</b> set a lower Max Route Hops before generating the swap (§5).</li>
                     <li><b>Want to move your setup to a new device or browser:</b> use Export/Import Settings (§12) for everything except the passcode, which has to be set up again by hand, and any Keystone pairing stays correct because it travels with the export.</li>
                 </ul>
@@ -608,6 +634,21 @@
             <p style="color: #8d8d99; font-size: 0.85em; text-align: center; margin-bottom: 15px;">Enter your passcode to continue.</p>
             <div id="passcode-verify-keypad" style="margin-bottom: 15px;"></div>
             <button id="btn-close-passcode-verify" class="cancel-btn" style="margin-bottom: 0; width: 100%;">CANCEL</button>
+        </div>
+    </div>
+
+    <!-- THEMED DIALOG: used instead of the browser's native alert()/confirm() popups (ui/themedDialog.js) -->
+    <div id="app-dialog" class="modal" style="display: none;" role="alertdialog" aria-modal="true" aria-labelledby="app-dialog-title" aria-describedby="app-dialog-message">
+        <div id="app-dialog-card" class="modal-content app-dialog-card" data-tone="info">
+            <div class="app-dialog-header">
+                <span id="app-dialog-icon" class="app-dialog-icon" aria-hidden="true"></span>
+                <h3 id="app-dialog-title" class="app-dialog-title"></h3>
+            </div>
+            <div id="app-dialog-message" class="app-dialog-message"></div>
+            <div class="app-dialog-actions">
+                <button id="app-dialog-cancel" class="app-dialog-btn app-dialog-btn-secondary" type="button" style="display: none;">Cancel</button>
+                <button id="app-dialog-ok" class="app-dialog-btn app-dialog-btn-primary" type="button">OK</button>
+            </div>
         </div>
     </div>
 
