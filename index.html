@@ -383,6 +383,17 @@
                 <button id="btn-add-wallet-confirm" class="info-btn" type="button" style="width: auto; padding: 10px; margin: 0; white-space: nowrap;">ADD</button>
             </div>
 
+            <!-- Optional: tag the wallet being added as a 2/2 multisig wallet (hot key in this browser + cold key on the signer) -->
+            <label style="display: flex; align-items: center; gap: 8px; color: #8d8d99; font-size: 0.85em; margin: -8px 0 10px 0; cursor: pointer;">
+                <input type="checkbox" id="new-wallet-multisig" style="width: auto; margin: 0; padding: 0;">
+                <span>🔐 This is a 2/2 multisig wallet</span>
+            </label>
+            <div id="new-wallet-multisig-fields" style="display: none; margin-bottom: 20px;">
+                <p style="color: #8d8d99; font-size: 0.75em; margin: 0 0 8px 0;">Enter the two public keys that make up the wallet. The address is derived from them — leave the address field empty, or paste it to have it double-checked.</p>
+                <input type="text" id="new-wallet-ms-key1" placeholder="Public key 1 (e.g. the hot key)" spellcheck="false" autocomplete="off" style="margin-bottom: 8px;">
+                <input type="text" id="new-wallet-ms-key2" placeholder="Public key 2 (e.g. the signer device)" spellcheck="false" autocomplete="off" style="margin-bottom: 0;">
+            </div>
+
             <label style="color: #8d8d99; font-size: 0.9em; display: block; margin-bottom: 10px;">Your Stored Accounts:</label>
             <div id="wallet-manager-list-container" style="max-height: 200px; overflow-y: auto; margin-bottom: 20px; display: flex; flex-direction: column; gap: 10px;">
                 <!-- JavaScript will dynamically build and inject rows here -->
@@ -434,6 +445,18 @@
                 <p style="color: #8d8d99; font-size: 0.75em; margin-bottom: 8px;">How long each frame stays on screen before cycling. Raise this if your camera struggles to capture frames cleanly. Default 150.</p>
             </div>
 
+            <!-- 3b) MULTISIG 2/2 -->
+            <div class="settings-group">
+                <div class="settings-group-title">Multisig (2/2)</div>
+                <button id="btn-open-hotkey-loader" class="info-btn" type="button" style="margin-bottom: 8px;">🔑 LOAD HOT KEY</button>
+                <p id="hotkey-status" style="font-size: 0.8em; margin: 0 0 6px 0; color: #8d8d99; word-break: break-all;">No hot key loaded.</p>
+                <button id="btn-unload-hotkey" class="cancel-btn" type="button" style="display: none; margin: 0 0 8px 0; width: 100%;">UNLOAD HOT KEY</button>
+                <p style="color: #8d8d99; font-size: 0.75em; margin-bottom: 12px;">For 2/2 multisig wallets. Scan the encrypted Secret QR made by your signer device and enter its passcode to load the "hot" half of the key. It is kept in memory only — never saved, never exported — and is gone when this tab closes or reloads. One hot key at a time; loading another replaces it.</p>
+
+                <button id="btn-open-multisig-derive" class="info-btn" type="button" style="margin-bottom: 8px;">🧮 DERIVE MULTISIG PUBKEY</button>
+                <p style="color: #8d8d99; font-size: 0.75em; margin-bottom: 8px;">Combine any two public keys into the multisig address, and add it to your wallets tagged as multisig.</p>
+            </div>
+
             <!-- 4) SAVE / EXPORT / IMPORT / CANCEL -->
             <div class="settings-actions">
                 <button id="btn-save-settings" class="snap-btn" type="button" style="margin-bottom: 10px;">💾 SAVE & RELOAD</button>
@@ -457,7 +480,7 @@
                 <p style="background: #0c0c0e; border: 1px dashed #9945FF; border-radius: 8px; padding: 10px 12px; color: #c7c7cf;">This app is read-only by itself — it works together with the <b>Semaj Solana Wallet</b> (the hardware signing device), or with <b>Keystone</b> QR code signing devices.</p>
 
                 <h4>1. What this app is</h4>
-                <p>This is a <b>watch-only</b> Solana wallet. It never holds, imports, or asks for a private key or seed phrase — it only ever works with public addresses. To actually sign a transaction, it hands the unsigned transaction to a separate signing device (a Keystone hardware wallet, or any other device that understands its QR formats) as a QR code, and scans back a QR code containing the signature. The private key never touches this app, this browser, or this device at any point.</p>
+                <p>This is a <b>watch-only</b> Solana wallet. It never holds, imports, or asks for a private key or seed phrase — it only ever works with public addresses. To actually sign a transaction, it hands the unsigned transaction to a separate signing device (a Keystone hardware wallet, or any other device that understands its QR formats) as a QR code, and scans back a QR code containing the signature. The private key never touches this app, this browser, or this device at any point — with one optional, clearly separate exception: the in-memory "hot key" of a 2/2 multisig wallet (§16), which only exists if you choose to load it.</p>
 
                 <h4>2. The dashboard</h4>
                 <p><b>TOTAL VALUE</b> at the top is your staked SOL plus your token balances, combined into one USD figure.</p>
@@ -509,7 +532,7 @@
                 <p>Settings is grouped into: <b>RPC</b> (a custom Solana RPC endpoint, if you don't want the default), <b>Passcode</b> (§10), <b>Keystone &amp; Animated QR</b> (device pairing, and the animated QR's fragment size / frame interval — lower fragment size means simpler but more numerous QR frames; raise the frame interval if your camera struggles to keep up), and <b>Save &amp; Reload / Export / Import</b> at the bottom.</p>
 
                 <h4>12. Export &amp; Import Settings</h4>
-                <p>From Settings, <b>⬆️ EXPORT</b> shows all of your settings as one JSON block you can copy and save somewhere safe; <b>⬇️ IMPORT</b> lets you paste a JSON block back in. This covers your RPC URL, animated-QR tuning, saved wallet addresses, Keystone pairings, the wallet-switch passcode preference, and any additional SPL tokens you've added (§13) — but never the passcode itself (§10), which always has to be set up by hand on each device. An example:</p>
+                <p>From Settings, <b>⬆️ EXPORT</b> shows all of your settings as one JSON block you can copy and save somewhere safe; <b>⬇️ IMPORT</b> lets you paste a JSON block back in. This covers your RPC URL, animated-QR tuning, saved wallet addresses, Keystone pairings, which wallets are tagged multisig (public keys only — never the hot key, §16), the wallet-switch passcode preference, and any additional SPL tokens you've added (§13) — but never the passcode itself (§10), which always has to be set up by hand on each device. An example:</p>
                 <pre><code>{
   "custom_solana_rpc_url": "",
   "qr_max_fragment_length": "800",
@@ -554,7 +577,7 @@
 
                 <h4>14. Security model — good to know</h4>
                 <ul>
-                    <li>This app never sees, stores, or asks for a private key or seed phrase, at any point.</li>
+                    <li>This app never stores or asks for a private key or seed phrase. The only exception is the optional multisig hot key (§16): decrypted from a Secret QR you provide, kept in this page's memory only, never saved or exported, and gone when the tab closes or reloads.</li>
                     <li>Signing always happens on a separate device, over a QR code — not over the network, not over Bluetooth.</li>
                     <li>The Keystone pairing data and fingerprint (§9) are public-key information, not secrets.</li>
                     <li>The passcode (§10) protects access to this app on this device/browser only — it is not a vault or encryption of any asset.</li>
@@ -571,6 +594,24 @@
                     <li><b>Want to move your setup to a new device or browser:</b> use Export/Import Settings (§12) for everything except the passcode, which has to be set up again by hand, and any Keystone pairing stays correct because it travels with the export.</li>
                 </ul>
 
+                <h4>16. Multisig wallets (2/2: hot key + signer device)</h4>
+                <p>A multisig wallet needs <b>two keys</b> to spend: a <b>hot key</b> loaded into this browser, and a <b>cold key</b> that stays inside your Semaj signer device. Together they produce one ordinary Solana signature, so the wallet looks like any other address on-chain. Day to day it feels like before — you load the hot key once at the start, then sign each transaction on the signer as usual.</p>
+                <p><b>Setting one up</b></p>
+                <ul>
+                    <li>Get the public key of your signer device and of the hot key (the hot key's public key is shown when you load it).</li>
+                    <li><b>Settings → Multisig (2/2) → 🧮 DERIVE MULTISIG PUBKEY</b>: enter the two public keys, then <b>➕ ADD TO MY WALLETS</b>. The wallet is added with a 🔐 tag. (Or, in <b>Manage Wallets</b>, tick "This is a 2/2 multisig wallet" and enter the two keys.)</li>
+                    <li>A brand-new multisig address has never received SOL, so the address check will ask you to confirm it — that is expected. Fund it by sending SOL to that address.</li>
+                </ul>
+                <p><b>Loading the hot key</b> — <b>Settings → Multisig (2/2) → 🔑 LOAD HOT KEY</b>: scan (or paste) the encrypted <b>Secret QR</b> made by your signer, enter its <b>passcode</b>, and the optional <b>fingerprint</b> if your signer was built with a device ID. The key is decrypted here and kept <b>in memory only</b>: never saved, never exported, and gone when the tab is closed or reloaded (switching wallets or Save &amp; Reload also reloads the page, so load it again afterwards). Only one hot key can be loaded; loading another replaces it. If you sign for a multisig wallet and none is loaded, the app asks for it right then.</p>
+                <p><b>Signing</b> — create a transaction as usual. The QR now carries a 2/2 co-signing request. Scan it with the signer device; the signer replies with a QR. Tap <b>📷 SCAN SIGNED QR RETURN</b> and scan that reply (static or animated, same as always). The app adds the hot key's half, checks the combined signature, and broadcasts it. ↻ Refresh works as usual and creates a new request.</p>
+                <p><b>Good to know</b></p>
+                <ul>
+                    <li>This needs the Semaj signer firmware with multisig support; a Keystone cannot co-sign a 2/2 wallet. Normal (non-multisig) wallets work with both, exactly as before.</li>
+                    <li>If the signer's reply does not belong to the transaction on screen or to this wallet's signer key, it is rejected before anything is sent.</li>
+                    <li>Multisig tags (public keys only) are part of Export/Import Settings so the wallet keeps its tag on another device. The hot key is never exported — load it there from the Secret QR again.</li>
+                    <li>The hot key lives in a web page's memory, which is weaker protection than the signer device. Keep the amount you hold in a 2/2 wallet in line with that, and close the tab when you are done.</li>
+                </ul>
+
             </div>
             <button id="btn-close-help" class="cancel-btn" style="margin-top: 15px; margin-bottom: 0; width: 100%;">CLOSE</button>
         </div>
@@ -585,6 +626,70 @@
             <button id="btn-settings-io-copy" class="snap-btn" type="button" style="margin-bottom: 10px; display: none;">📋 COPY TO CLIPBOARD</button>
             <button id="btn-settings-io-save" class="snap-btn" type="button" style="margin-bottom: 10px; display: none;">💾 SAVE & RELOAD</button>
             <button id="btn-settings-io-close" class="cancel-btn" style="margin-bottom: 0; width: 100%;">CLOSE</button>
+        </div>
+    </div>
+
+    <!-- HOT KEY MODAL (multisig): decrypt a Secret QR into the in-memory hot key -->
+    <div id="hotkey-modal" class="modal" style="display: none; z-index: 1500;">
+        <div class="modal-content">
+            <h3 style="color: #14F195; text-align: center; margin-bottom: 15px;">Load Hot Key</h3>
+            <p id="hotkey-reason" style="display: none; background: #0c0c0e; border: 1px dashed #9945FF; border-radius: 8px; padding: 10px 12px; color: #c7c7cf; font-size: 0.85em; margin-bottom: 12px;"></p>
+
+            <label for="hotkey-secret-input" style="color: #8d8d99; font-size: 0.9em;">Secret QR (encrypted key):</label>
+            <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 12px;">
+                <input type="text" id="hotkey-secret-input" placeholder="Scan, or paste the digits…" spellcheck="false" autocomplete="off" style="margin: 0; flex-grow: 1;">
+                <button id="btn-hotkey-scan-secret" class="snap-btn" type="button" style="width: auto; padding: 10px; margin: 0; white-space: nowrap;">📷 SCAN</button>
+            </div>
+
+            <label for="hotkey-passcode-input" style="color: #8d8d99; font-size: 0.9em;">Passcode:</label>
+            <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 12px;">
+                <input type="password" id="hotkey-passcode-input" placeholder="Passcode for this Secret QR" autocomplete="new-password" spellcheck="false" style="margin: 0; flex-grow: 1;">
+                <button id="btn-hotkey-scan-passcode" class="snap-btn" type="button" style="width: auto; padding: 10px; margin: 0; white-space: nowrap;">📷 SCAN</button>
+            </div>
+
+            <label for="hotkey-fingerprint-input" style="color: #8d8d99; font-size: 0.9em;">Fingerprint (optional):</label>
+            <input type="text" id="hotkey-fingerprint-input" placeholder="Leave empty unless your signer uses one" spellcheck="false" autocomplete="off" style="margin-bottom: 4px;">
+            <p style="color: #8d8d99; font-size: 0.75em; margin: 0 0 12px 0;">The signer's device ID (ESP32_DEVICE_PASSCODE_ID) it was built with, if any. It is part of the key derivation, so it must match what the Secret QR was made with.</p>
+
+            <div id="hotkey-scanner-region" style="display: none; width: 100%; box-sizing: border-box; flex-direction: column; align-items: center; margin-bottom: 15px;">
+                <p id="hotkey-scanner-label" style="text-align: center; color: #14F195; font-size: 0.85em; font-weight: bold; margin: 0 0 8px 0;"></p>
+                <div id="hotkey-reader" style="width: 100%; border-radius: 8px; overflow: hidden; background: #000;"></div>
+                <button id="btn-hotkey-scan-stop" class="cancel-btn" type="button" style="margin: 8px 0 0 0; width: 100%;">STOP CAMERA</button>
+            </div>
+
+            <p id="hotkey-status-line" style="color: #8d8d99; font-size: 0.8em; margin: 0 0 8px 0;"></p>
+            <button id="btn-hotkey-load" class="snap-btn" type="button" style="margin-bottom: 10px;">🔑 LOAD KEY</button>
+            <button id="btn-hotkey-cancel" class="cancel-btn" type="button" style="margin-bottom: 0; width: 100%;">CANCEL</button>
+        </div>
+    </div>
+
+    <!-- MULTISIG DERIVE HELPER: two public keys -> multisig address -->
+    <div id="multisig-derive-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <h3 style="color: #14F195; text-align: center; margin-bottom: 15px;">Derive Multisig Public Key</h3>
+            <p style="color: #8d8d99; font-size: 0.8em; margin-bottom: 12px;">Enter the two public keys — for example the hot key from this browser and the public key of your signer device. The multisig address is the same whichever order you enter them in.</p>
+
+            <label for="multisig-derive-key1" style="color: #8d8d99; font-size: 0.9em;">Public key 1:</label>
+            <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 12px;">
+                <input type="text" id="multisig-derive-key1" placeholder="Base58 public key" spellcheck="false" autocomplete="off" style="margin: 0; flex-grow: 1;">
+                <button id="btn-multisig-use-hotkey" class="snap-btn" type="button" style="width: auto; padding: 10px; margin: 0; white-space: nowrap;">USE HOT KEY</button>
+            </div>
+
+            <label for="multisig-derive-key2" style="color: #8d8d99; font-size: 0.9em;">Public key 2:</label>
+            <input type="text" id="multisig-derive-key2" placeholder="Base58 public key" spellcheck="false" autocomplete="off" style="margin-bottom: 12px;">
+
+            <button id="btn-multisig-derive" class="snap-btn" type="button" style="margin-bottom: 12px;">🧮 DERIVE</button>
+
+            <div id="multisig-derive-result" style="display: none; margin-bottom: 12px;">
+                <label style="color: #8d8d99; font-size: 0.9em;">Multisig address:</label>
+                <div id="multisig-derive-address" style="font-family: monospace; color: #14F195; background: #09090a; border: 1px solid #29292e; border-radius: 6px; padding: 10px 12px; word-break: break-all; margin: 6px 0 10px 0;"></div>
+                <div style="display: flex; gap: 10px;">
+                    <button id="btn-multisig-copy-address" class="info-btn" type="button" style="flex: 1; margin: 0;">📋 COPY</button>
+                    <button id="btn-multisig-add-wallet" class="snap-btn" type="button" style="flex: 2; margin: 0;">➕ ADD TO MY WALLETS</button>
+                </div>
+            </div>
+
+            <button id="btn-close-multisig-derive" class="cancel-btn" type="button" style="margin-bottom: 0; width: 100%;">CLOSE</button>
         </div>
     </div>
 
